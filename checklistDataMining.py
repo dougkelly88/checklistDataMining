@@ -9,9 +9,9 @@ class Base(object):
         self.timeTaken = ""
 
     def basePopulate(self, ws, r):
-        self.doneBy = ws.cell(row = r-1, column = 4).value
-        self.startedAt = ws.cell(row = r-1, column = 6).value
-        self.startedAt = ws.cell(row = r-1, column = 8).value
+        self.doneBy = ws.cell(row = r, column = 5).value
+        self.startedAt = ws.cell(row = r, column = 7).value
+        self.timeTaken = ws.cell(row = r, column = 9).value
 
 class PrintSampleData:
 
@@ -227,7 +227,7 @@ class PositionOil(Base):
         self.lowHumidity = ""
 
     def populate(self, ws):
-        self.basePopulate(ws, 33)
+        self.basePopulate(ws, 41)
         self.lowHumidity = ws['L41'].value
         
 
@@ -250,4 +250,8 @@ if __name__ == "__main__":
     print(psd.printingSetup.positionOil.doneBy)
     print(psd.printingSetup.positionOil.startedAt)
     print(psd.printingSetup.positionOil.lowHumidity)
+
+    print(psd.electrodePrep.flaming.doneBy)
+    print(psd.electrodePrep.flaming.startedAt)
+    
 
