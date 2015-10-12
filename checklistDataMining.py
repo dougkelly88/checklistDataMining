@@ -6,88 +6,75 @@ class Base(object):
         self.doneBy = "ME"
         self.startedAt = ""
 
+class PrintSampleData:
+
+    def __init__(self):
+
+        self.generalTasks = GeneralTasks()
+
+class GeneralTasks:
+
+    def __init__(self):
+
+        self.roomTemperature = RoomTemperature()
+        self.roomHumidity = RoomHumidity()
+        self.tip = Tip()
+        self.slide = Slide()
+        self.oil = Oil()
+        self.mix = Mix()
+
 class RoomTemperature(Base):
 
     def __init__(self):
 
         super(RoomTemperature, self).__init__()
-        #self.doneBy = ""
-        #self.startedAt = ""
         self.roomTemperature = ""
 
-class PrintSampleData:
+class RoomHumidity(Base):
 
     def __init__(self):
 
-        self.generalTasks = self.GeneralTasks()
+        super(RoomHumidity, self).__init__()
+        self.roomHumidity = ""
 
-    class GeneralTasks:
+class Tip(Base):
 
-        def __init__(self):
+    def __init__(self):
 
-#            self.roomTemperature = self.RoomTemperature()
-            self.roomTemperature = RoomTemperature()
-            self.roomHumidity = self.RoomHumidity()
-            self.tip = self.Tip()
-            self.slide = self.Slide()
-            self.oil = self.Oil()
-            self.mix = self.Mix()
+        super(Tip, self).__init__()
+        self.size = ""
+        self.tipBatch = ""
+        self.tipID = ""
 
-##        class RoomTemperature(Base):
-##
-##            def __init__(self):
-##
-##                super(RoomTemperature, self).__init__()
-##                #self.doneBy = ""
-##                #self.startedAt = ""
-##                self.roomTemperature = ""
+class Slide(Base):
 
-        class RoomHumidity:
+    def __init__(self):
 
-            def __init__(self):
+        super(Slide, self).__init__()
+        self.CA = ""
+        self.batch = ""
+        self.slideID = ""
 
-                self.doneBy = ""
-                self.startedAt = ""
-                self.roomHumidity = ""
+class Oil(Base):
 
-        class Tip:
+    def __init__(self):
 
-            def __init__(self):
+        super(Oil, self).__init__()
+        self.oilID = ""
 
-                self.doneBy = ""
-                self.size = ""
-                self.tipBatch = ""
-                self.tipID = ""
+class Mix(Base):
 
-        class Slide:
+    def __init__(self):
 
-            def __init__(self):
-
-                self.doneBy = ""
-                self.CA = ""
-                self.batch = ""
-                self.slideID = ""
-
-        class Oil:
-
-            def __init__(self):
-
-                self.doneBy = ""
-                self.oilID = ""
-
-        class Mix:
-
-            def __init__(self):
-
-                self.doneBy = ""
-                self.type = ""
-                self.claire633 = ""
-                self.claire594 = ""
-                self.claire532 = ""
-                self.claire488 = "500000"
-                
-            
+        super(Mix, self).__init__()
+        self.type = ""
+        self.claire633 = ""
+        self.claire594 = ""
+        self.claire532 = ""
+        self.claire488 = "500000"
         
+    
+    
 
 
 
