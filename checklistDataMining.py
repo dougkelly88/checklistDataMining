@@ -1,5 +1,20 @@
 import os, time
 
+class Base(object):
+
+    def __init__(self):
+        self.doneBy = "ME"
+        self.startedAt = ""
+
+class RoomTemperature(Base):
+
+    def __init__(self):
+
+        super(RoomTemperature, self).__init__()
+        #self.doneBy = ""
+        #self.startedAt = ""
+        self.roomTemperature = ""
+
 class PrintSampleData:
 
     def __init__(self):
@@ -10,20 +25,22 @@ class PrintSampleData:
 
         def __init__(self):
 
-            self.roomTemperature = self.RoomTemperature()
+#            self.roomTemperature = self.RoomTemperature()
+            self.roomTemperature = RoomTemperature()
             self.roomHumidity = self.RoomHumidity()
             self.tip = self.Tip()
             self.slide = self.Slide()
             self.oil = self.Oil()
             self.mix = self.Mix()
 
-        class RoomTemperature:
-
-            def __init__(self):
-
-                self.doneBy = ""
-                self.startedAt = ""
-                self.roomTemperature = ""
+##        class RoomTemperature(Base):
+##
+##            def __init__(self):
+##
+##                super(RoomTemperature, self).__init__()
+##                #self.doneBy = ""
+##                #self.startedAt = ""
+##                self.roomTemperature = ""
 
         class RoomHumidity:
 
@@ -81,6 +98,7 @@ if __name__ == "__main__":
     print(psd.generalTasks.mix.claire488)
     psd.generalTasks.mix.claire488 = "15"
     print(psd.generalTasks.mix.claire488)
+    print(psd.generalTasks.roomTemperature.doneBy)
     
 
     
