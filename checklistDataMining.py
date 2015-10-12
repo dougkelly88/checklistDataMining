@@ -21,6 +21,9 @@ class PrintSampleData:
         self.generalTasks = GeneralTasks()
         self.electrodePrep = ElectrodePrep()
         self.printingSetup = PrintingSetup()
+        self.printing = Printing()
+        self.postPrinting = PostPrint()
+        self.postIncubation = PostIncubation()
 
 class GeneralTasks:
 
@@ -229,7 +232,162 @@ class PositionOil(Base):
     def populate(self, ws):
         self.basePopulate(ws, 41)
         self.lowHumidity = ws['L41'].value
+
+class Printing():
+    
+    def __init__(self):
+
+        self.moveIntoOil = MoveIntoOil()
+        self.humidifierHigh = HumidifierHigh()
+        self.optimisePrinting = OptimisePrinting()
+        self.pPrint = PPrint()
+
+    def populate(self, ws):
+        self.moveIntoOil.populate(ws)
+        self.humidifierHigh.populate(ws)
+        self.optimisePrinting.populate(ws)
+        self.pPrint.populate(ws)
+
+class MoveIntoOil(Base):
+
+    def __init__(self):
+
+        super(MoveIntoOil, self).__init__()
+
+    def populate(self, ws):
+        self.basePopulate(ws, 43)
+
+class HumidifierHigh(Base):
+
+    def __init__(self):
+
+        super(HumidifierHigh, self).__init__()
+        self.highHumidity = ""
+
+    def populate(self, ws):
+        self.basePopulate(ws, 45)
+        self.highHumidity = ws['L45'].value
+
+class OptimisePrinting(Base):
+
+    def __init__(self):
+
+        super(OptimisePrinting, self).__init__()
+
+    def populate(self, ws):
+        self.basePopulate(ws, 47)
+
+class PPrint(Base):
+
+    def __init__(self):
+
+        super(PPrint, self).__init__()
+        self.dwell = ""
+        self.setp = ""
+        self.voltage = ""
+        self.frequency = ""
+        self.pressure = ""
         
+
+    def populate(self, ws):
+        self.basePopulate(ws, 49)
+        self.dwell = ws['L50'].value
+        self.setp = ws['N50'].value
+        self.voltage = ws['P50'].value
+        self.frequency = ws['R50'].value
+        self.pressure = ws['T50'].value
+
+class PostPrint():
+    def __init__(self):
+
+        self.transferToOven = TransferToOven()
+        self.recoverMix = RecoverMix()
+        self.tipSize = TipSize()
+
+    def populate(self, ws):
+        self.transferToOven.populate(ws)
+        self.recoverMix.populate(ws)
+        self.tipSize.populate(ws)
+
+class TransferToOven(Base):
+    def __init__(self):
+
+        super(TransferToOven, self).__init__()
+
+    def populate(self, ws):
+        self.basePopulate(ws, 52)
+
+class RecoverMix(Base):
+    def __init__(self):
+
+        super(RecoverMix, self).__init__()
+
+    def populate(self, ws):
+        self.basePopulate(ws, 54)
+
+class TipSize(Base):
+    def __init__(self):
+
+        super(TipSize, self).__init__()
+        tipSizeUm = ""
+
+    def populate(self, ws):
+        self.basePopulate(ws, 56)
+        self.tipSizeUm = ws['L56'].value
+
+class PostIncubation():
+    def __init__(self):
+
+        self.coolDown = CoolDown()
+        self.checkWater = CheckWater()
+        self.waitTime = WaitTime()
+        self.measurePushThrough = MeasurePushThrough()
+
+    def populate(self, ws):
+        self.coolDown.populate(ws)
+        self.checkWater.populate(ws)
+        self.waitTime.populate(ws)
+        self.measurePushThrough.populate(ws)
+
+class CoolDown(Base):
+    def __init__(self):
+
+        super(CoolDown, self).__init__()
+
+    def populate(self, ws):
+        self.basePopulate(ws, 58)
+
+class CheckWater(Base):
+    def __init__(self):
+
+        super(CheckWater, self).__init__()
+
+    def populate(self, ws):
+        self.basePopulate(ws, 60)
+
+class WaitTime(Base):
+    def __init__(self):
+
+        super(WaitTime, self).__init__()
+
+    def populate(self, ws):
+        self.basePopulate(ws, 62)
+
+class MeasurePushThrough(Base):
+    def __init__(self):
+
+        super(MeasurePushThrough, self).__init__()
+        self.claire633 = ""
+        self.claire594 = ""
+        self.claire532 = ""
+        self.claire488 = ""
+        
+    def populate(self, ws):
+        self.basePopulate(ws, 64)
+        self.claire633 = ws['L64'].value
+        self.claire594 = ws['N64'].value
+        self.claire532 = ws['P64'].value
+        self.claire488 = ws['R64'].value
 
 if __name__ == "__main__":
 
@@ -242,6 +400,9 @@ if __name__ == "__main__":
     psd.generalTasks.populate(ws)
     psd.electrodePrep.populate(ws)
     psd.printingSetup.populate(ws)
+    psd.printing.populate(ws)
+    psd.postPrinting.populate(ws)
+    psd.postIncubation.populate(ws)
 
     #testing
     print(psd.generalTasks.roomTemperature.roomTemperature)
@@ -251,7 +412,8 @@ if __name__ == "__main__":
     print(psd.printingSetup.positionOil.startedAt)
     print(psd.printingSetup.positionOil.lowHumidity)
 
-    print(psd.electrodePrep.flaming.doneBy)
-    print(psd.electrodePrep.flaming.startedAt)
-    
-
+    print('BREAK')
+    print(psd.printing.pPrint.frequency)
+    print(psd.postIncubation.measurePushThrough.claire633)
+    print(psd.postPrinting.recoverMix.doneBy)
+    print(psd.postPrinting.recoverMix.startedAt)
