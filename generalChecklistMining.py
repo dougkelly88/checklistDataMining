@@ -7,6 +7,11 @@ MODE_APPEND = 0
 MODE_NEW = 1
 CHECKLIST_FILE_FORMAT = '.xlsm'
 
+# Error messages
+NOT_YET_SUPPORTED = "Sorry, this feature is not yet supported!"
+INVALID_PATH = "No (valid) path selected!"
+FILES_LENGTH_ZERO = "No (valid) files found in this location!"
+
 class ChecklistBase(object):
     """ Base class for checklist-level common properties"""
     def __init__(self):
@@ -83,12 +88,10 @@ def chooseFolder(initialdir, prompt):
         print(file)
         
         if file == "":
-            print('No (valid) path selected! Quitting...')
-            exit()
+            errorHandler(INVALID_PATH)
 
     except IOError:
-        print('No (valid) file selected! Quitting...')
-        exit()
+        errorHandler(INVALID_PATH)
 
     return file
 
@@ -99,20 +102,23 @@ def chooseOutputFile(initialdir, initialfile):
         options['initialfile'] = initialfile
         options['defaultextension'] = '.xls'
         options['filetypes'] = [('Excel spreadsheet', '.xlsx'), ('Comma separated variable file', '.csv')]
-        #options['filetypes'] = ['.xls', '.csv', '.xls']
         options['title'] = 'Choose an output file to save the summary data to...'
         file = tkFileDialog.asksaveasfilename(**options)
         print(file)
         
         if file == "":
-            print('No (valid) path selected! Quitting...')
-            exit()
+            errorHandler(INVALID_PATH)
 
     except IOError:
-        print('No (valid) file selected! Quitting...')
-        exit()
+        errorHandler(INVALID_PATH)
 
     return file
+
+def errorHandler(message):
+    print(message)
+    showerror("Error!", message)
+    # TODO: log file? send email?
+    exit()
 
 if __name__ == "__main__":
 
@@ -154,6 +160,8 @@ if __name__ == "__main__":
                 if CHECKLIST_FILE_FORMAT in basename:
                     checklistList.append(os.path.join(root, basename))
         print(checklistList)
+        if (len(checklistList) == 0):
+            errorHandler(FILES_LENGTH_ZERO)
         
         # prompt user for checklist type - or get from place to look for checklists?
         # for now, assume that data is in Z:\SOPs\Completed Checklists\Data and figure out which class to use from which folder is selected immediately below
@@ -165,8 +173,7 @@ if __name__ == "__main__":
         elif (testString[1] == 'Slide coating - fluorinated silane'):
             print("Use SlideCoating class")
         else:
-            print("Checklist not yet supported!")
-            exit()
+            errorHandler(NOT_YET_SUPPORTED)
 
         # prompt user for fields to include in summary       
         # loop through all checklists in this location and add a checklist class for each case to a List
