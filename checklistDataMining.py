@@ -1,14 +1,18 @@
-import os, time
+﻿import os, time, string, datetime
 from openpyxl import Workbook, load_workbook
 
 class Base(object):
     """ Base class for common properties"""
     def __init__(self):
+        self.taskNumber = ""
+        self.taskLabel = ""
         self.doneBy = ""
         self.startedAt = ""
         self.timeTaken = ""
 
     def basePopulate(self, ws, r):
+        self.taskNumber = ws.cell(row = r, column = 2).value
+        self.taskLabel = ws.cell(row = r, column =4).value
         self.doneBy = ws.cell(row = r, column = 5).value
         self.startedAt = ws.cell(row = r, column = 7).value
         self.timeTaken = ws.cell(row = r, column = 9).value
@@ -18,12 +22,33 @@ class PrintSampleData:
     def __init__(self, sampleName):
 
         self.sampleName = sampleName
+        #TODO: check SOP version against script version - warning if mismatch
         self.generalTasks = GeneralTasks()
         self.electrodePrep = ElectrodePrep()
         self.printingSetup = PrintingSetup()
         self.printing = Printing()
         self.postPrinting = PostPrint()
         self.postIncubation = PostIncubation()
+
+    def parseSampleID(self, sampleID):
+        """ Outputs rig #, date """
+        splitString = string.split(sampleID, "-")
+        print(splitString)
+        output = [""]*2
+        if len(splitString)==3:
+            output[0] = splitString[0][1]
+            d=splitString[1][4:]
+            m=splitString[1][2:4]
+            y=splitString[1][0:2]
+            output[1] = "%s/%s/20%s" % (d, m, y)
+        else:
+            #TODO: log warning about unexpected sample ID format, taking best guess
+            output[0] = sampleID[1]
+            y = sampleID[2:4]
+            m = sampleID[4:6]
+            d = sampleID[6:8]
+            output[1] = "%s/%s/20%s" % (d, m, y)
+        return output
 
 class GeneralTasks:
 
@@ -52,8 +77,7 @@ class RoomTemperature(Base):
         self.roomTemperature = ""
 
     def populate(self, ws):
-        self.doneBy = ws['E15'].value
-        self.startedAt = ws['G15'].value
+        self.basePopulate(ws, 15)
         self.roomTemperature = ws['L15'].value
 
 class RoomHumidity(Base):
@@ -64,8 +88,7 @@ class RoomHumidity(Base):
         self.roomHumidity = ""
 
     def populate(self, ws):
-        self.doneBy = ws['E17'].value
-        self.startedAt = ws['G17'].value
+        self.basePopulate(ws, 17)
         self.roomHumidity = ws['L17'].value
 
 class Tip(Base):
@@ -78,8 +101,8 @@ class Tip(Base):
         self.tipID = ""
 
     def populate(self, ws):
-        self.doneBy = ws['E19'].value
-        self.size = ws['L19'].value
+        self.basePopulate(ws, 19)
+        self.size = ''.join([i for i in ws['L19'].value if i.isdigit()])
         self.tipBatch = ws['O19'].value
         self.tipID = ws['S19'].value
 
@@ -93,7 +116,7 @@ class Slide(Base):
         self.slideID = ""
 
     def populate(self, ws):
-        self.doneBy = ws['E21'].value
+        self.basePopulate(ws, 21)
         self.CA = ws['L21'].value
         self.batch = ws['O21'].value
         self.slideID = ws['S21'].value
@@ -106,7 +129,7 @@ class Oil(Base):
         self.oilID = ""
 
     def populate(self, ws):
-        self.doneBy = ws['E23'].value
+        self.basePopulate(ws, 23)
         self.oilID = ws['L23'].value
 
 class Mix(Base):
@@ -121,12 +144,12 @@ class Mix(Base):
         self.claire488 = ""
 
     def populate(self, ws):
-        self.doneBy = ws['E25'].value
+        self.basePopulate(ws, 25)
         self.type = ws['L25'].value
         self.claire633 = ws['N25'].value
         self.claire594 = ws['P25'].value
         self.claire532 = ws['R25'].value
-        self.claire488 = ws['S25'].value
+        self.claire488 = ws['T25'].value
         
 class ElectrodePrep():
 
@@ -283,7 +306,7 @@ class PPrint(Base):
 
         super(PPrint, self).__init__()
         self.dwell = ""
-        self.setp = ""
+        self.step = ""
         self.voltage = ""
         self.frequency = ""
         self.pressure = ""
@@ -292,7 +315,7 @@ class PPrint(Base):
     def populate(self, ws):
         self.basePopulate(ws, 49)
         self.dwell = ws['L50'].value
-        self.setp = ws['N50'].value
+        self.step = ws['N50'].value
         self.voltage = ws['P50'].value
         self.frequency = ws['R50'].value
         self.pressure = ws['T50'].value
@@ -389,12 +412,87 @@ class MeasurePushThrough(Base):
         self.claire532 = ws['P64'].value
         self.claire488 = ws['R64'].value
 
+def outputData(psd, gspd):
+
+    output=[]
+    # Perform parsing and caclulating tasks
+    parsedSampleID = psd.parseSampleID(psd.sampleName)
+    output.append(parsedSampleID[1])                            # date
+    output.append("")                                           # experiment ID
+    output.append(psd.sampleName)                               # sample name
+    output.append("")                                           # protocol version
+    output.append("Rig%s" % parsedSampleID[0])                  # Rig
+    output.append(psd.printing.pPrint.doneBy)                   # Printer
+    output.append(aMPM(psd.printingSetup.filling.startedAt))    # AM/PM
+    output.append("")                                           # Run score
+    output.append("")                                           # Basecalling?
+    output.append(psd.generalTasks.slide.CA)                    # Slide CA
+    output.append(psd.generalTasks.slide.batch)                 # Slide batch
+    output.append(psd.generalTasks.tip.size)                    # Tip size
+    output.append(psd.generalTasks.tip.tipBatch)                # Tip batch
+    output.append("")                                           # blank column
+    #output.append(gpsd.oilWaterRest)                            # Oil/water rest time
+    #output.append(gpsd.oilWaterVortex)                          # Oil/water vortex time
+    output.append("")                                           # Oil/surfactant prepared by weight?
+    #output.append(gpsd.surfactantConcn)                         # Surfactant concentration
+    output.append(psd.generalTasks.roomTemperature.roomTemperature) # Room temp
+    output.append(psd.generalTasks.roomHumidity.roomHumidity)   # Room humidity
+    output.append(psd.printingSetup.positionOil.lowHumidity)    # Low humidity
+    output.append(psd.printing.humidifierHigh.highHumidity)     # High humidity
+    output.append("")                                           # empty
+    output.append(psd.printing.pPrint.timeTaken)                # Print time
+    output.append("")                                           # Array quality
+    output.append("")                                           # Droplet density
+    output.append(psd.printing.pPrint.voltage)                  # Print voltage
+    output.append(psd.printing.pPrint.frequency)                # Print frequency
+    output.append(psd.printing.pPrint.dwell)                    # Dwell time
+    output.append(psd.printing.pPrint.step)                     # Step size
+    output.append(psd.printing.pPrint.pressure)                 # Pressure
+    output.append("")                                           # blank
+    output.append("")                                           # Air con
+    output.append("")                                           # Door
+    output.append("")                                           # blank
+    output.append(psd.generalTasks.mix.type)                    # Mix
+    output.append(psd.generalTasks.mix.claire633)               # 633 bulk
+    output.append(psd.generalTasks.mix.claire594)               # 594 bulk
+    output.append(psd.generalTasks.mix.claire532)               # 532 bulk
+    output.append(psd.generalTasks.mix.claire488)               # 488 bulk
+    output.append(psd.postIncubation.measurePushThrough.claire633)  # 633 push through
+    output.append(psd.postIncubation.measurePushThrough.claire594)  # 594 push through
+    output.append(psd.postIncubation.measurePushThrough.claire532)  # 532 push through
+    output.append(psd.postIncubation.measurePushThrough.claire488)  # 488 push through                      
+    
+    print(output)
+    
+
+def aMPM(startTime):
+    print('AMPMcheck')
+    print(startTime)
+    if isinstance(startTime, basestring):
+        print("startTime is a string")
+        a = int(startTime[0:2])
+        if a < 12:
+            return "AM"
+        else:
+            return "PM"
+    elif isinstance(startTime, datetime.time):
+        if startTime.hour < 12:
+            return "AM"
+        else:
+            return "PM"
+    else:
+        print("Type not handled!")
+        print(type(startTime))
+    
+
 if __name__ == "__main__":
 
     wb = load_workbook('Z:\\SOPs\\Completed Checklists\\Data\\Printing\\Printing 1 2015-10-09 1130.xlsm')
     ws = wb.active
     
     psd = PrintSampleData(ws['E8'].value)
+    #gspd = GeneralSamplePrepData()
+    gspd = None
 
     print(psd.sampleName)
     psd.generalTasks.populate(ws)
@@ -404,16 +502,29 @@ if __name__ == "__main__":
     psd.postPrinting.populate(ws)
     psd.postIncubation.populate(ws)
 
-    #testing
-    print(psd.generalTasks.roomTemperature.roomTemperature)
-    print(psd.generalTasks.roomTemperature.doneBy)
-    print(psd.generalTasks.mix.doneBy)
-    print(psd.printingSetup.positionOil.doneBy)
-    print(psd.printingSetup.positionOil.startedAt)
-    print(psd.printingSetup.positionOil.lowHumidity)
 
+    # Perform parsing and caclulating tasks
+    
+
+    #testing
+    print(psd.generalTasks.roomTemperature.taskNumber)
+    print(psd.generalTasks.roomTemperature.taskLabel)
+    output = psd.parseSampleID(psd.sampleName)
+    print(output)
+    output = psd.parseSampleID("P1150607A")
+    print(output)
+    print(aMPM("11:30"))
     print('BREAK')
-    print(psd.printing.pPrint.frequency)
-    print(psd.postIncubation.measurePushThrough.claire633)
-    print(psd.postPrinting.recoverMix.doneBy)
-    print(psd.postPrinting.recoverMix.startedAt)
+    outputData(psd, None)
+##    print(psd.generalTasks.roomTemperature.roomTemperature)
+##    print(psd.generalTasks.roomTemperature.doneBy)
+##    print(psd.generalTasks.mix.doneBy)
+##    print(psd.printingSetup.positionOil.doneBy)
+##    print(psd.printingSetup.positionOil.startedAt)
+##    print(psd.printingSetup.positionOil.lowHumidity)
+##
+##    print('BREAK')
+##    print(psd.printing.pPrint.frequency)
+##    print(psd.postIncubation.measurePushThrough.claire633)
+##    print(psd.postPrinting.recoverMix.doneBy)
+##    print(psd.postPrinting.recoverMix.startedAt)
