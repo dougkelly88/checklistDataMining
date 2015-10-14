@@ -1,5 +1,11 @@
-import os, time, string, datetime
+import os, time, string, datetime, tkFileDialog
 from openpyxl import Workbook, load_workbook
+from Tkinter import *
+from tkMessageBox import *
+
+MODE_APPEND = 0
+MODE_NEW = 1
+CHECKLIST_FILE_FORMAT = '.xlsm'
 
 class ChecklistBase(object):
     """ Base class for checklist-level common properties"""
@@ -67,14 +73,113 @@ class Printing(ChecklistBase):
 
 #class PrintheadPrinting(ChecklistBase):
 
+def chooseFolder(initialdir, prompt):
+    import tkFileDialog
+
+    try:
+        options = {}
+        options['initialdir']=initialdir
+        file = tkFileDialog.askdirectory(**options)
+        print(file)
+        
+        if file == "":
+            print('No (valid) path selected! Quitting...')
+            exit()
+
+    except IOError:
+        print('No (valid) file selected! Quitting...')
+        exit()
+
+    return file
+
+def chooseOutputFile(initialdir, initialfile):
+    try:
+        options = {}
+        options['initialdir']=initialdir
+        options['initialfile'] = initialfile
+        options['defaultextension'] = '.xls'
+        options['filetypes'] = [('Excel spreadsheet', '.xlsx'), ('Comma separated variable file', '.csv')]
+        #options['filetypes'] = ['.xls', '.csv', '.xls']
+        options['title'] = 'Choose an output file to save the summary data to...'
+        file = tkFileDialog.asksaveasfilename(**options)
+        print(file)
+        
+        if file == "":
+            print('No (valid) path selected! Quitting...')
+            exit()
+
+    except IOError:
+        print('No (valid) file selected! Quitting...')
+        exit()
+
+    return file
 
 if __name__ == "__main__":
 
-    wb = load_workbook('Z:\\SOPs\\Completed Checklists\\Data\\Printing\\Printing 1 2015-10-09 1130.xlsm')
-    ws = wb.active
+    mode = MODE_NEW
+    xml_export = False;
 
-    printing = Printing()
-    printing.populatePrintingClass(ws)
-    v = vars(printing)
-    print(', '.join("%s: %s" % item for item in v.items()))
-    print(printing.sampleName)
+    if (mode == MODE_APPEND):
+        print("Mode = APPEND")
+        # prompt user to choose type of checklist being summarised, or do so automatically?
+        # prompt user for output file, or take from arguments to allow scheduled running?
+        # identify output file
+        # identify date of last entry
+        # identify checklists since last entry
+        # loop through these checklists and add a checklist class for each case to a List
+        # from output file column titles identify the fields to export - if fields don't exist, add warning text to these entries?
+        # from output file, determine list of ID fields that can be used to confirm that new entries don't already exist
+        # perform check for exisiting entries and delete those classes from the List
+        # loop through classes and fields and parse to output format
+        # append to output file - first checking that write is possible and warning user (email?) if not
+        # TODO: add option for googlesheets export
+        # OPTION: re-export checklist data in XML format?
+
+    if (mode == MODE_NEW):
+        print("Mode = NEW")
+        # prompt user for output file name/location
+        # TODO: add googledocs option?
+        initialDir = "Z:\\SOPs\\Completed Checklists\\Data"
+        initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
+        outputFile = chooseOutputFile(initialDir, initialFile)
+        
+        # prompt user for place to look for checklists
+        prompt = "Please choose a location in which to look for checklist spreadsheets..."
+        inputPath = chooseFolder(initialDir, prompt)
+
+        # generate list of checklist paths
+        checklistList = []
+        for root, dirs, files in os.walk(inputPath):
+            for basename in files:
+                if CHECKLIST_FILE_FORMAT in basename:
+                    checklistList.append(os.path.join(root, basename))
+        print(checklistList)
+        
+        # prompt user for checklist type - or get from place to look for checklists?
+        # for now, assume that data is in Z:\SOPs\Completed Checklists\Data and figure out which class to use from which folder is selected immediately below
+        dummy = os.path.split(checklistList[0])
+        testString = dummy[0].split('/Data/')
+        print(testString)
+        if (testString[1] == 'Printing'):
+            print("Use Printing class")
+        elif (testString[1] == 'Slide coating - fluorinated silane'):
+            print("Use SlideCoating class")
+        else:
+            print("Checklist not yet supported!")
+            exit()
+
+        # prompt user for fields to include in summary       
+        # loop through all checklists in this location and add a checklist class for each case to a List
+        # loop through classes and fields and parse to output format
+        # write to output file (googledoc?)
+
+    #wb = load_workbook('Z:\\SOPs\\Completed Checklists\\Data\\Printing\\Printing 1 2015-10-09 1130.xlsm')
+    #ws = wb.active
+
+    #printing = Printing()
+    #printing.populatePrintingClass(ws)
+    #v = vars(printing)
+    #print(', '.join("%s: %s" % item for item in v.items()))
+    #print(printing.sampleName)
+
+
