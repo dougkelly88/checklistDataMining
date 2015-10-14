@@ -432,9 +432,12 @@ def outputData(psd, gspd):
     output.append(psd.generalTasks.tip.tipBatch)                # Tip batch
     output.append("")                                           # blank column
     #output.append(gpsd.oilWaterRest)                            # Oil/water rest time
+    output.append("")
     #output.append(gpsd.oilWaterVortex)                          # Oil/water vortex time
+    output.append("")
     output.append("")                                           # Oil/surfactant prepared by weight?
     #output.append(gpsd.surfactantConcn)                         # Surfactant concentration
+    output.append("")
     output.append(psd.generalTasks.roomTemperature.roomTemperature) # Room temp
     output.append(psd.generalTasks.roomHumidity.roomHumidity)   # Room humidity
     output.append(psd.printingSetup.positionOil.lowHumidity)    # Low humidity
@@ -483,6 +486,12 @@ def aMPM(startTime):
     else:
         print("Type not handled!")
         print(type(startTime))
+
+def outputDataToSpreadsheet(outputData):
+
+    # identify analysis spreadsheet and whether it can be opened for writing:
+    wb = load_workbook('Book1.xlsx')
+    wb
     
 
 if __name__ == "__main__":
@@ -507,15 +516,16 @@ if __name__ == "__main__":
     
 
     #testing
-    print(psd.generalTasks.roomTemperature.taskNumber)
-    print(psd.generalTasks.roomTemperature.taskLabel)
-    output = psd.parseSampleID(psd.sampleName)
-    print(output)
-    output = psd.parseSampleID("P1150607A")
-    print(output)
-    print(aMPM("11:30"))
-    print('BREAK')
-    outputData(psd, None)
+    outputData(psd, gspd)
+    #print(psd.generalTasks.roomTemperature.taskNumber)
+    #print(psd.generalTasks.roomTemperature.taskLabel)
+    #output = psd.parseSampleID(psd.sampleName)
+    #print(output)
+    #output = psd.parseSampleID("P1150607A")
+    #print(output)
+    #print(aMPM("11:30"))
+    #print('BREAK')
+    
 ##    print(psd.generalTasks.roomTemperature.roomTemperature)
 ##    print(psd.generalTasks.roomTemperature.doneBy)
 ##    print(psd.generalTasks.mix.doneBy)
