@@ -75,6 +75,9 @@ class Printing(ChecklistBase):
             output[1] = "%s/%s/20%s" % (d, m, y)
         return output
 
+    def populatePrintingTasks(self, ws):
+        print(ws['B1:B100'])
+
 
 #class PrintheadPrinting(ChecklistBase):
 
@@ -165,18 +168,30 @@ if __name__ == "__main__":
         
         # prompt user for checklist type - or get from place to look for checklists?
         # for now, assume that data is in Z:\SOPs\Completed Checklists\Data and figure out which class to use from which folder is selected immediately below
+        internalDataList = []
         dummy = os.path.split(checklistList[0])
         testString = dummy[0].split('/Data/')
         print(testString)
         if (testString[1] == 'Printing'):
             print("Use Printing class")
+            internalDataList.append(Printing())
         elif (testString[1] == 'Slide coating - fluorinated silane'):
             print("Use SlideCoating class")
         else:
             errorHandler(NOT_YET_SUPPORTED)
 
-        # prompt user for fields to include in summary       
+        # populate class tasks based on checklist spreadsheet
+        wb = load_workbook(checklistList[0])
+        ws = wb.active
+        internalDataList[0].populatePrintingTasks(ws)
+
+        # prompt user for fields to include in summary      
+        inclusionList = vars(internalDataList[0])
+
+
+         
         # loop through all checklists in this location and add a checklist class for each case to a List
+        #for cl in checklistList:
         # loop through classes and fields and parse to output format
         # write to output file (googledoc?)
 
