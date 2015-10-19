@@ -118,6 +118,18 @@ class Printing(ChecklistBase):
 
         def populate(self, ws, r):
             TaskBase.populate(self, ws, r)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("Size" in c):
+                        self.size = ws.cell(row = r, column = col+1).value
+                    if ("batch" in c.lower()):
+                        self.batch = ws.cell(row = r, column = col+1).value
+                    if ("ID" in c):
+                        self.ID = ws.cell(row = r, column = col+1).value
+
+
             self.size = ws.cell(row = r, column = 12).value
             #self.batch = ws.cell(row = r, column = 15).value + "-" + ws.cell(row = r, column = 17).value
             self.batch = ws.cell(row = r, column = 15).value
