@@ -21,15 +21,16 @@ class ChecklistBase(object):
         self.qCPerson = ""
         self.tasks = []
     
-    class TaskBase(object):
-        """ Base class for task-level common properties"""
-        def __init__(self):
-            self.taskNumber = ""
-            self.taskLabel = ""
-            self.taskCategory = ""
-            self.doneBy = ""
-            self.startedAt = ""
-            self.timeTaken = ""
+class TaskBase(object):
+    """ Base class for task-level common properties"""
+    def __init__(self):
+        self.taskNumber = ""
+        self.taskLabel = ""
+        self.taskCategory = ""
+        self.doneBy = ""
+        self.startedAt = ""
+        self.timeTaken = ""           
+        self.notes = ""
 
 class Printing(ChecklistBase):
     """Class containing all variables and methods relating to the printing checklist"""
@@ -44,6 +45,43 @@ class Printing(ChecklistBase):
         # Initialise specialised print checklist variables that are not explicitly in checklist but may be derived from checklist entries
         self.printDate = ""
         self.printRig = ""
+
+    class PrintTask(TaskBase):
+        def __init__(self):
+            self.dwell = ""
+            self.step = ""
+            self.voltage = ""
+            self.freq = ""
+            self.pressure = ""
+
+    class BulksTask(TaskBase):
+        def __init__(self):
+            self.type = ""
+            self.claire700 = ""
+            self.claire655 = ""
+            self.claire594 = ""
+            self.claire532 = ""
+            self.claire488 = ""
+
+    class TipTask(TaskBase):
+        def __init__(self):
+            self.size = ""
+            self.batch = ""
+            self.ID = ""
+
+    class SlideTask(TaskBase):
+        def __init__(self):
+            self.CA = ""
+            self.batch = ""
+            self.ID = ""
+
+    class HumidityTask(TaskBase):
+        def __init__(self):
+            self.humidity = ""
+
+    class TemperatureTask(TaskBase):
+        def __init__(self):
+            self.temperature = ""
 
     def populatePrintingClass(self, ws):
         """Populate checklist-level data for the Printing case"""
@@ -76,8 +114,27 @@ class Printing(ChecklistBase):
         return output
 
     def populatePrintingTasks(self, ws):
-        print(ws['B1:B100'])
+        print('Populating...')
+        category = ""
+        for row in ws.iter_rows('B1:B100'):
+            for cell in row:
+                if (isinstance(cell.value, long)):
+                    r = row[0].row
+                    taskNumber = cell.value
+                    if (ws.cell(row = r, column = 3).value != None):
+                        category = ws.cell(row = r, column = 3).value
+                    taskLabel = ws.cell(row = r, column = 4).value
+                    t = TaskBase()
+                    t.taskLabel = taskLabel
+                    t.taskCategory = category
+                    t.taskNumber  = taskNumber
+                    print(t.taskNumber)
+                    print(t.taskLabel)
+                    print(t.taskCategory)
 
+                    #print(cell.value)
+                    #print(row[0].row)
+                    #print(type(row[0]))
 
 #class PrintheadPrinting(ChecklistBase):
 
@@ -187,9 +244,9 @@ if __name__ == "__main__":
 
         # prompt user for fields to include in summary      
         inclusionList = vars(internalDataList[0])
+        print(inclusionList)
+        print('Run to this point')
 
-
-         
         # loop through all checklists in this location and add a checklist class for each case to a List
         #for cl in checklistList:
         # loop through classes and fields and parse to output format
