@@ -33,7 +33,7 @@ class TaskBase(object):
         self.timeTaken = ""           
         self.notes = []
 
-    def basePopulate(self, ws, r):
+    def populate(self, ws, r):
         self.doneBy = ws.cell(row = r, column = 5).value
         self.startedAt = ws.cell(row = r, column = 7).value
         self.timeTaken = ws.cell(row = r, column = 9).value
@@ -76,7 +76,7 @@ class Printing(ChecklistBase):
             self.pressure = ""
 
         def populate(self, ws, r):
-            self.basePopulate(ws, r)
+            TaskBase.populate(self, ws, r)
             self.dwell = ws.cell(row = r+1, column = 12).value
             self.step = ws.cell(row = r+1, column = 14).value
             self.voltage = ws.cell(row = r+1, column = 16).value
@@ -93,24 +93,22 @@ class Printing(ChecklistBase):
             self.claire488 = ""
 
         def populate(self, ws, r):
-            print("populating bulks class")
-            self.basePopulate(ws, r)
+            TaskBase.populate(self, ws, r)
             for col in range(26):
                 c = ws.cell(row = r, column = col).value
-                if ("633nm" in c) or ("655nm" in c):
-                    print(c)
-                    print(c.value)
-                    self.claire655 = ws.cell(row = r, column = col+1).value
-                if ("700nm" in c):
-                    self.claire700 = ws.cell(row = r, column = col+1).value
-                if ("594nm" in c):
-                    self.claire594 = ws.cell(row = r, column = col+1).value
-                if ("532nm" in c):
-                    self.claire532 = ws.cell(row = r, column = col+1).value
-                if ("488nm" in c):
-                    self.claire488 = ws.cell(row = r, column = col+1).value
-                if ("type" in c.lower()):
-                    self.type = ws.cell(row = r, column = col+1).value
+                if (isinstance(c, basestring)):
+                    if ("633nm" in c) or ("655nm" in c):
+                        self.claire655 = ws.cell(row = r, column = col+1).value
+                    if ("700nm" in c):
+                        self.claire700 = ws.cell(row = r, column = col+1).value
+                    if ("594nm" in c):
+                        self.claire594 = ws.cell(row = r, column = col+1).value
+                    if ("532nm" in c):
+                        self.claire532 = ws.cell(row = r, column = col+1).value
+                    if ("488nm" in c):
+                        self.claire488 = ws.cell(row = r, column = col+1).value
+                    if ("type" in c.lower()):
+                        self.type = ws.cell(row = r, column = col+1).value
 
     class TipTask(TaskBase):
         def __init__(self):
@@ -119,8 +117,7 @@ class Printing(ChecklistBase):
             self.ID = ""
 
         def populate(self, ws, r):
-            print("populating tip task")
-            self.basePopulate(ws, r)
+            TaskBase.populate(self, ws, r)
             self.size = ws.cell(row = r, column = 12).value
             #self.batch = ws.cell(row = r, column = 15).value + "-" + ws.cell(row = r, column = 17).value
             self.batch = ws.cell(row = r, column = 15).value
@@ -133,6 +130,7 @@ class Printing(ChecklistBase):
             self.ID = ""
 
         def populate(self, ws, r):
+            TaskBase.populate(self, ws, r)
             self.CA = ws.cell(row = r, column = 12).value
             self.batch = ws.cell(row = r, column = 15).value
             self.ID = ws.cell(row = r, column = 19).value
@@ -142,7 +140,7 @@ class Printing(ChecklistBase):
             self.humidity = ""
 
         def populate(self, ws, r):
-            self.basePopulate(ws, r)
+            TaskBase.populate(self, ws, r)
             self.humidity = ws.cell(row = r, column = 12).value
             self.notes = ws.cell(row = r, column = 14).value
 
@@ -151,7 +149,7 @@ class Printing(ChecklistBase):
             self.temperature = ""
 
         def populate(self, ws, r):
-            self.basePopulate(ws, r)
+            TaskBase.populate(self, ws, r)
             self.temperature = ws.cell(row = r, column = 12).value
             self.notes = ws.cell(row = r, column = 14).value
 
@@ -210,11 +208,11 @@ class Printing(ChecklistBase):
                     #    t.basePopulate(ws, r)
                     #else:
                     #    t.populate(ws, r)
-                    t.basePopulate(ws, r)
+                    #t.basePopulate(ws, r)
                     #print(t.taskNumber)
                     #print(t.taskLabel)
                     #print(t.taskCategory)
-                    #print(vars(t))
+                    print(vars(t))
 
 
 #class PrintheadPrinting(ChecklistBase):
