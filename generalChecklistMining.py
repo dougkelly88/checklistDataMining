@@ -50,6 +50,8 @@ def identifyCorrectClass(description):
             return Printing.TipTask()
         if (description == "mix") or ("push-through" in description):
             return Printing.BulksTask()
+        if (description == "print"):
+            return Printing.PrintTask()
         else:
             return TaskBase()
 
@@ -77,11 +79,20 @@ class Printing(ChecklistBase):
 
         def populate(self, ws, r):
             TaskBase.populate(self, ws, r)
-            self.dwell = ws.cell(row = r+1, column = 12).value
-            self.step = ws.cell(row = r+1, column = 14).value
-            self.voltage = ws.cell(row = r+1, column = 16).value
-            self.freq = ws.cell(row = r+1, column = 18).value
-            self.pressure = ws.cell(row = r+1, column = 20).value
+
+            for col in range(26):
+                c = ws.cell(row = r+1, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("dwell" in c.lower()):
+                        self.dwell = ws.cell(row = r+1, column = col+1).value
+                    if ("step" in c.lower()):
+                        self.step = ws.cell(row = r+1, column = col+1).value
+                    if ("voltage" in c.lower()):
+                        self.voltage = ws.cell(row = r+1, column = col+1).value
+                    if ("freq" in c.lower()):
+                        self.freq = ws.cell(row = r+1, column = col+1).value
+                    if ("pressure" in c.lower()):
+                        self.pressure = ws.cell(row = r+1, column = col+1).value
 
     class BulksTask(TaskBase):
         def __init__(self):
@@ -129,12 +140,6 @@ class Printing(ChecklistBase):
                     if ("ID" in c):
                         self.ID = ws.cell(row = r, column = col+1).value
 
-
-            self.size = ws.cell(row = r, column = 12).value
-            #self.batch = ws.cell(row = r, column = 15).value + "-" + ws.cell(row = r, column = 17).value
-            self.batch = ws.cell(row = r, column = 15).value
-            self.ID = ws.cell(row = r, column = 19).value
-
     class SlideTask(TaskBase):
         def __init__(self):
             self.CA = ""
@@ -143,9 +148,16 @@ class Printing(ChecklistBase):
 
         def populate(self, ws, r):
             TaskBase.populate(self, ws, r)
-            self.CA = ws.cell(row = r, column = 12).value
-            self.batch = ws.cell(row = r, column = 15).value
-            self.ID = ws.cell(row = r, column = 19).value
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("CA" in c):
+                        self.CA = ws.cell(row = r, column = col+1).value
+                    if ("batch" in c.lower()):
+                        self.batch = ws.cell(row = r, column = col+1).value
+                    if ("#" in c):
+                        self.ID = ws.cell(row = r, column = col+1).value
 
     class HumidityTask(TaskBase):
         def __init__(self):
