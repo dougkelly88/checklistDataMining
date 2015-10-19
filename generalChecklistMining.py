@@ -2,6 +2,7 @@ import os, time, string, datetime, tkFileDialog
 from openpyxl import Workbook, load_workbook
 from Tkinter import *
 from tkMessageBox import *
+import inspect
 
 MODE_APPEND = 0
 MODE_NEW = 1
@@ -30,7 +31,27 @@ class TaskBase(object):
         self.doneBy = ""
         self.startedAt = ""
         self.timeTaken = ""           
-        self.notes = ""
+        self.notes = []
+
+    def basePopulate(self, ws, r):
+        self.doneBy = ws.cell(row = r, column = 5).value
+        self.startedAt = ws.cell(row = r, column = 7).value
+        self.timeTaken = ws.cell(row = r, column = 9).value
+
+def identifyCorrectClass(description):
+        description = description.lower()
+        if ("humidity" in description) or ("humidifier" in description):
+            return Printing.HumidityTask()
+        if ("temperature" in description):
+            return Printing.TemperatureTask()
+        if (description == "slide"):
+            return Printing.SlideTask()
+        if (description == "tip") or ("tip size" in description):
+            return Printing.TipTask()
+        if (description == "mix") or ("push-through" in description):
+            return Printing.BulksTask()
+        else:
+            return TaskBase()
 
 class Printing(ChecklistBase):
     """Class containing all variables and methods relating to the printing checklist"""
@@ -54,6 +75,14 @@ class Printing(ChecklistBase):
             self.freq = ""
             self.pressure = ""
 
+        def populate(self, ws, r):
+            self.basePopulate(ws, r)
+            self.dwell = ws.cell(row = r+1, column = 12).value
+            self.step = ws.cell(row = r+1, column = 14).value
+            self.voltage = ws.cell(row = r+1, column = 16).value
+            self.freq = ws.cell(row = r+1, column = 18).value
+            self.pressure = ws.cell(row = r+1, column = 20).value
+
     class BulksTask(TaskBase):
         def __init__(self):
             self.type = ""
@@ -63,11 +92,39 @@ class Printing(ChecklistBase):
             self.claire532 = ""
             self.claire488 = ""
 
+        def populate(self, ws, r):
+            print("populating bulks class")
+            self.basePopulate(ws, r)
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if ("633nm" in c) or ("655nm" in c):
+                    print(c)
+                    print(c.value)
+                    self.claire655 = ws.cell(row = r, column = col+1).value
+                if ("700nm" in c):
+                    self.claire700 = ws.cell(row = r, column = col+1).value
+                if ("594nm" in c):
+                    self.claire594 = ws.cell(row = r, column = col+1).value
+                if ("532nm" in c):
+                    self.claire532 = ws.cell(row = r, column = col+1).value
+                if ("488nm" in c):
+                    self.claire488 = ws.cell(row = r, column = col+1).value
+                if ("type" in c.lower()):
+                    self.type = ws.cell(row = r, column = col+1).value
+
     class TipTask(TaskBase):
         def __init__(self):
             self.size = ""
             self.batch = ""
             self.ID = ""
+
+        def populate(self, ws, r):
+            print("populating tip task")
+            self.basePopulate(ws, r)
+            self.size = ws.cell(row = r, column = 12).value
+            #self.batch = ws.cell(row = r, column = 15).value + "-" + ws.cell(row = r, column = 17).value
+            self.batch = ws.cell(row = r, column = 15).value
+            self.ID = ws.cell(row = r, column = 19).value
 
     class SlideTask(TaskBase):
         def __init__(self):
@@ -75,13 +132,28 @@ class Printing(ChecklistBase):
             self.batch = ""
             self.ID = ""
 
+        def populate(self, ws, r):
+            self.CA = ws.cell(row = r, column = 12).value
+            self.batch = ws.cell(row = r, column = 15).value
+            self.ID = ws.cell(row = r, column = 19).value
+
     class HumidityTask(TaskBase):
         def __init__(self):
             self.humidity = ""
 
+        def populate(self, ws, r):
+            self.basePopulate(ws, r)
+            self.humidity = ws.cell(row = r, column = 12).value
+            self.notes = ws.cell(row = r, column = 14).value
+
     class TemperatureTask(TaskBase):
         def __init__(self):
             self.temperature = ""
+
+        def populate(self, ws, r):
+            self.basePopulate(ws, r)
+            self.temperature = ws.cell(row = r, column = 12).value
+            self.notes = ws.cell(row = r, column = 14).value
 
     def populatePrintingClass(self, ws):
         """Populate checklist-level data for the Printing case"""
@@ -124,17 +196,26 @@ class Printing(ChecklistBase):
                     if (ws.cell(row = r, column = 3).value != None):
                         category = ws.cell(row = r, column = 3).value
                     taskLabel = ws.cell(row = r, column = 4).value
-                    t = TaskBase()
+                    t = identifyCorrectClass(taskLabel)
                     t.taskLabel = taskLabel
                     t.taskCategory = category
                     t.taskNumber  = taskNumber
-                    print(t.taskNumber)
+                    
                     print(t.taskLabel)
-                    print(t.taskCategory)
+                    t.populate(ws, r)
 
-                    #print(cell.value)
-                    #print(row[0].row)
-                    #print(type(row[0]))
+
+                    #if isinstance(t, TaskBase):
+                    #    print(t)
+                    #    t.basePopulate(ws, r)
+                    #else:
+                    #    t.populate(ws, r)
+                    t.basePopulate(ws, r)
+                    #print(t.taskNumber)
+                    #print(t.taskLabel)
+                    #print(t.taskCategory)
+                    #print(vars(t))
+
 
 #class PrintheadPrinting(ChecklistBase):
 
@@ -243,8 +324,9 @@ if __name__ == "__main__":
         internalDataList[0].populatePrintingTasks(ws)
 
         # prompt user for fields to include in summary      
-        inclusionList = vars(internalDataList[0])
-        print(inclusionList)
+        #inclusionList = vars(internalDataList[0])
+        #print(inclusionList)
+        print(internalDataList[0])
         print('Run to this point')
 
         # loop through all checklists in this location and add a checklist class for each case to a List
