@@ -2,6 +2,7 @@ import os, time, string, datetime, tkFileDialog
 from openpyxl import Workbook, load_workbook
 from Tkinter import *
 from tkMessageBox import *
+import tkSimpleDialog
 import inspect
 
 MODE_APPEND = 0
@@ -12,6 +13,59 @@ CHECKLIST_FILE_FORMAT = '.xlsm'
 NOT_YET_SUPPORTED = "Sorry, this feature is not yet supported!"
 INVALID_PATH = "No (valid) path selected!"
 FILES_LENGTH_ZERO = "No (valid) files found in this location!"
+
+class outputSelectionDialog(object):
+    """ Dialog box allowing selection of output params"""
+    def __init__(self, internalData):
+        self.data = internalData
+        print(self.data)
+        root = self.root = Tk()
+        self.sizex = 400
+        self.sizey = 600
+        self.posx  = 100
+        self.posy  = 100
+        root.wm_geometry("%dx%d+%d+%d" % (self.sizex, self.sizey, self.posx, self.posy))
+        root.title('Select data to export...')
+        frm_1 = Frame(root)
+        frm_1.pack(ipadx=2, ipady=2)
+        self.canvas = Canvas(frm_1)
+        frm_2 = Frame(self.canvas)
+        scrlbar = Scrollbar(frm_1,orient="vertical",command=self.canvas.yview)
+        scrlbar.pack(side="right",fill="y")
+        self.canvas.configure(yscrollcommand=scrlbar.set)
+        self.canvas.pack(side="left")
+        self.canvas.create_window((0,0),window=frm_2,anchor='nw')
+        frm_2.bind("<Configure>",self.myfunction)
+
+        #i = 0
+        #for v in vars(self.data):
+        #    if (v != 'tasks') and (v != 'output'):
+        #        lbl = Label(frm_2, text = v)
+        #        #.grid(row = i, column = 0)
+        #        #i=i+1
+        #        lbl.pack(padx=0, pady=8)
+        for t in self.data.tasks:
+            txt = "%s: %s" % (t.taskCategory, t.taskLabel)
+            #for tt in vars(t):
+            #    if (tt != 'taskCategory') and (tt != 'taskLabel') and (tt != 'taskNumber'):
+            #        txtii = txt + tt
+            lbl = Label(frm_2, text = txt)
+            #chk = Checkbutton(frm_2, text = txt, variable = t.output)
+            #.grid(row = i, column = 0)
+            #i = i+1
+            lbl.pack(padx=0, pady=8)
+        btn_1 = Button(frm_2, width=8, text='OK')
+        btn_1['command'] = self.b1_action
+        btn_1.pack(side='left')
+        
+    def myfunction(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"),width=self.sizex,height=self.sizey)
+    
+    def b1_action(self, event=None):
+        print('quitting...')
+        self.root.quit()
+
+
 
 class ChecklistBase(object):
     """ Base class for checklist-level common properties"""
@@ -30,7 +84,8 @@ class TaskBase(object):
         self.taskCategory = ""
         self.doneBy = ""
         self.startedAt = ""
-        self.timeTaken = ""           
+        self.timeTaken = ""    
+        self.output = False       
         self.notes = []
 
     def populate(self, ws, r):
@@ -64,6 +119,7 @@ class Printing(ChecklistBase):
         # Initialise specialised print checklist variables
         self.sampleName = ""
         self.experimenter = ""
+        self.output = False
         
         # Initialise specialised print checklist variables that are not explicitly in checklist but may be derived from checklist entries
         self.printDate = ""
@@ -343,9 +399,16 @@ if __name__ == "__main__":
         # prompt user for fields to include in summary      
         for internalData in internalDataList:
             print(internalData.sampleName)
-            for task in internalData.tasks:
-                print(vars(task))
+            #for task in internalData.tasks:
+            #    for v in vars(task):
+            #        #print(v)
         print('Run to this point')
+
+        m = outputSelectionDialog(internalDataList[0])
+        m.root.mainloop()
+        m.root.destroy()
+        print('run past dialog')
+
 
         # loop through classes and fields and parse to output format
         # write to output file (googledoc?)
