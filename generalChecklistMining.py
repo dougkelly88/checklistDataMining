@@ -190,21 +190,22 @@ class Printing(ChecklistBase):
 
     def parseSampleID(self, sampleID):
         """ Outputs rig #, date """
-        splitString = string.split(sampleID, "-")
         output = [""]*2
-        if len(splitString)==3:
-            output[0] = splitString[0][1]
-            d=splitString[1][4:]
-            m=splitString[1][2:4]
-            y=splitString[1][0:2]
-            output[1] = "%s/%s/20%s" % (d, m, y)
-        else:
-            #TODO: log warning about unexpected sample ID format, taking best guess
-            output[0] = sampleID[1]
-            y = sampleID[2:4]
-            m = sampleID[4:6]
-            d = sampleID[6:8]
-            output[1] = "%s/%s/20%s" % (d, m, y)
+        if isinstance(sampleID, basestring):
+            splitString = string.split(sampleID, "-")
+            if len(splitString)==3:
+                output[0] = splitString[0][1]
+                d=splitString[1][4:]
+                m=splitString[1][2:4]
+                y=splitString[1][0:2]
+                output[1] = "%s/%s/20%s" % (d, m, y)
+            else:
+                #TODO: log warning about unexpected sample ID format, taking best guess
+                output[0] = sampleID[1]
+                y = sampleID[2:4]
+                m = sampleID[4:6]
+                d = sampleID[6:8]
+                output[1] = "%s/%s/20%s" % (d, m, y)
         return output
 
     def populatePrintingTasks(self, ws):
@@ -222,21 +223,10 @@ class Printing(ChecklistBase):
                     t.taskLabel = taskLabel
                     t.taskCategory = category
                     t.taskNumber  = taskNumber
-                    
-                    print(t.taskLabel)
                     t.populate(ws, r)
+                    self.tasks.append(t)
 
 
-                    #if isinstance(t, TaskBase):
-                    #    print(t)
-                    #    t.basePopulate(ws, r)
-                    #else:
-                    #    t.populate(ws, r)
-                    #t.basePopulate(ws, r)
-                    #print(t.taskNumber)
-                    #print(t.taskLabel)
-                    #print(t.taskCategory)
-                    print(vars(t))
 
 
 #class PrintheadPrinting(ChecklistBase):
@@ -308,13 +298,14 @@ if __name__ == "__main__":
         print("Mode = NEW")
         # prompt user for output file name/location
         # TODO: add googledocs option?
-        initialDir = "Z:\\SOPs\\Completed Checklists\\Data"
-        initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
-        outputFile = chooseOutputFile(initialDir, initialFile)
+        #initialDir = "Z:\\SOPs\\Completed Checklists\\Data"
+        #initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
+        #outputFile = chooseOutputFile(initialDir, initialFile)
         
         # prompt user for place to look for checklists
-        prompt = "Please choose a location in which to look for checklist spreadsheets..."
-        inputPath = chooseFolder(initialDir, prompt)
+        #prompt = "Please choose a location in which to look for checklist spreadsheets..."
+        #inputPath = chooseFolder(initialDir, prompt)
+        inputPath = "Z:/SOPs/Completed Checklists/Data/Printing"
 
         # generate list of checklist paths
         checklistList = []
@@ -322,7 +313,7 @@ if __name__ == "__main__":
             for basename in files:
                 if CHECKLIST_FILE_FORMAT in basename:
                     checklistList.append(os.path.join(root, basename))
-        print(checklistList)
+        #print(checklistList)
         if (len(checklistList) == 0):
             errorHandler(FILES_LENGTH_ZERO)
         
@@ -334,25 +325,28 @@ if __name__ == "__main__":
         print(testString)
         if (testString[1] == 'Printing'):
             print("Use Printing class")
-            internalDataList.append(Printing())
+            for checklist in checklistList:
+                print(checklist)
+                wb = load_workbook(checklist)
+                ws = wb.active
+                p = Printing()
+                p.populatePrintingClass(ws)
+                p.populatePrintingTasks(ws)
+                if (p.sampleName != None):
+                    if ("ppl" not in p.sampleName.lower()):
+                        internalDataList.append(p)
         elif (testString[1] == 'Slide coating - fluorinated silane'):
             print("Use SlideCoating class")
         else:
             errorHandler(NOT_YET_SUPPORTED)
 
-        # populate class tasks based on checklist spreadsheet
-        wb = load_workbook(checklistList[0])
-        ws = wb.active
-        internalDataList[0].populatePrintingTasks(ws)
-
         # prompt user for fields to include in summary      
-        #inclusionList = vars(internalDataList[0])
-        #print(inclusionList)
-        print(internalDataList[0])
+        for internalData in internalDataList:
+            print(internalData.sampleName)
+            for task in internalData.tasks:
+                print(vars(task))
         print('Run to this point')
 
-        # loop through all checklists in this location and add a checklist class for each case to a List
-        #for cl in checklistList:
         # loop through classes and fields and parse to output format
         # write to output file (googledoc?)
 
