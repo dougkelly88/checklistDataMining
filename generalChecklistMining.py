@@ -37,24 +37,17 @@ class outputSelectionDialog(object):
         self.canvas.create_window((0,0),window=frm_2,anchor='nw')
         frm_2.bind("<Configure>",self.myfunction)
 
-        #i = 0
-        #for v in vars(self.data):
-        #    if (v != 'tasks') and (v != 'output'):
-        #        lbl = Label(frm_2, text = v)
-        #        #.grid(row = i, column = 0)
-        #        #i=i+1
-        #        lbl.pack(padx=0, pady=8)
+        i = 0
+        self.vars = []
         for t in self.data.tasks:
             txt = "%s: %s" % (t.taskCategory, t.taskLabel)
-            #for tt in vars(t):
-            #    if (tt != 'taskCategory') and (tt != 'taskLabel') and (tt != 'taskNumber'):
-            #        txtii = txt + tt
-            lbl = Label(frm_2, text = txt)
-            #chk = Checkbutton(frm_2, text = txt, variable = t.output)
-            #.grid(row = i, column = 0)
-            #i = i+1
-            lbl.pack(padx=0, pady=8)
-        btn_1 = Button(frm_2, width=8, text='OK')
+            var = IntVar()
+            chk = Checkbutton(frm_2, text = txt, variable = var)
+            i = i+1
+            chk.pack(padx = 0, pady = 5, anchor = W)
+            chk['command'] = self.c1_action
+            self.vars.append(var)
+        btn_1 = Button(frm_1, width=8, text='OK')
         btn_1['command'] = self.b1_action
         btn_1.pack(side='left')
         
@@ -64,6 +57,17 @@ class outputSelectionDialog(object):
     def b1_action(self, event=None):
         print('quitting...')
         self.root.quit()
+
+    def c1_action(self, event = None):
+        i = 0
+        for v in self.vars:
+            if (v.get() == 1):
+                self.data.tasks[i].output = True
+            else:
+                self.data.tasks[i].output = False
+            print(self.data.tasks[i].taskLabel)
+            print(self.data.tasks[i].output)
+            i = i+1
 
 
 
@@ -92,6 +96,7 @@ class TaskBase(object):
         self.doneBy = ws.cell(row = r, column = 5).value
         self.startedAt = ws.cell(row = r, column = 7).value
         self.timeTaken = ws.cell(row = r, column = 9).value
+        self.output = False
 
 def identifyCorrectClass(description):
         description = description.lower()
@@ -223,6 +228,8 @@ class Printing(ChecklistBase):
             TaskBase.populate(self, ws, r)
             self.humidity = ws.cell(row = r, column = 12).value
             self.notes = ws.cell(row = r, column = 14).value
+            #print("Humidity task")
+            #print(vars(self))
 
     class TemperatureTask(TaskBase):
         def __init__(self):
@@ -230,8 +237,11 @@ class Printing(ChecklistBase):
 
         def populate(self, ws, r):
             TaskBase.populate(self, ws, r)
+            #print(self.output)
             self.temperature = ws.cell(row = r, column = 12).value
             self.notes = ws.cell(row = r, column = 14).value
+            #print("Temperature task")
+            #print(vars(self))
 
     def populatePrintingClass(self, ws):
         """Populate checklist-level data for the Printing case"""
@@ -397,8 +407,8 @@ if __name__ == "__main__":
             errorHandler(NOT_YET_SUPPORTED)
 
         # prompt user for fields to include in summary      
-        for internalData in internalDataList:
-            print(internalData.sampleName)
+        #for internalData in internalDataList:
+            #print(internalData.sampleName)
             #for task in internalData.tasks:
             #    for v in vars(task):
             #        #print(v)
