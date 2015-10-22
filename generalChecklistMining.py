@@ -47,15 +47,15 @@ class outputSelectionDialog(object):
             chk.pack(padx = 0, pady = 5, anchor = W)
             chk['command'] = self.c1_action
             self.vars.append(var)
-        btn_1 = Button(frm_1, width=8, text='OK')
+        btn_1 = Button(frm_2, width=8, text='OK')
         btn_1['command'] = self.b1_action
-        btn_1.pack(side='left')
+        btn_1.pack(anchor = CENTER)
         
     def myfunction(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"),width=self.sizex,height=self.sizey)
     
     def b1_action(self, event=None):
-        print('quitting...')
+        #print('quitting...')
         self.root.quit()
 
     def c1_action(self, event = None):
@@ -65,11 +65,9 @@ class outputSelectionDialog(object):
                 self.data.tasks[i].output = True
             else:
                 self.data.tasks[i].output = False
-            print(self.data.tasks[i].taskLabel)
-            print(self.data.tasks[i].output)
+            #print(self.data.tasks[i].taskLabel)
+            #print(self.data.tasks[i].output)
             i = i+1
-
-
 
 class ChecklistBase(object):
     """ Base class for checklist-level common properties"""
@@ -372,6 +370,7 @@ if __name__ == "__main__":
         #prompt = "Please choose a location in which to look for checklist spreadsheets..."
         #inputPath = chooseFolder(initialDir, prompt)
         inputPath = "Z:/SOPs/Completed Checklists/Data/Printing"
+        inputPath = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/Data/Printing"
 
         # generate list of checklist paths
         checklistList = []
@@ -407,20 +406,36 @@ if __name__ == "__main__":
             errorHandler(NOT_YET_SUPPORTED)
 
         # prompt user for fields to include in summary      
-        #for internalData in internalDataList:
-            #print(internalData.sampleName)
-            #for task in internalData.tasks:
-            #    for v in vars(task):
-            #        #print(v)
-        print('Run to this point')
-
         m = outputSelectionDialog(internalDataList[0])
         m.root.mainloop()
         m.root.destroy()
-        print('run past dialog')
-
+        print('run past dialog, data to save:')
+        for t in m.data.tasks:
+            if (t.output):
+                print(t.taskLabel)
 
         # loop through classes and fields and parse to output format
+        for internalData in internalDataList:
+            print("SampleName: %s" % internalData.sampleName)
+            print("Experimenter: %s" % internalData.experimenter)
+            print("QC person: %s" % internalData.qCPerson)
+            print("Print date: %s" % internalData.printDate) 
+            print("")
+            for mt in m.data.tasks:
+                if (mt.output):
+                    for task in internalData.tasks:
+                        if (task.taskLabel == mt.taskLabel):
+                            print("")
+                            print(mt.taskLabel)
+                            v = vars(task)
+                            for key in v:
+                                #print(key)
+                                if (key != 'taskLabel') and (key != 'taskCategory') and (key != 'taskNumber') and (key != 'notes') and (key != 'output'):
+                                    print("%s: " % key)
+                                    print(v[key])
+
+                #i = 1 + i    
+            print("")
         # write to output file (googledoc?)
 
     #wb = load_workbook('Z:\\SOPs\\Completed Checklists\\Data\\Printing\\Printing 1 2015-10-09 1130.xlsm')
