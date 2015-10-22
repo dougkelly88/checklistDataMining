@@ -78,6 +78,7 @@ class ChecklistBase(object):
         self.date = ""
         self.qCPerson = ""
         self.tasks = []
+        self.path = ""
     
 class TaskBase(object):
     """ Base class for task-level common properties"""
@@ -116,10 +117,10 @@ def identifyCorrectClass(description):
 
 class Printing(ChecklistBase):
     """Class containing all variables and methods relating to the printing checklist"""
-    def __init__(self):
+    def __init__(self, path):
         # Initialise general checklist class
         super(Printing, self).__init__()
-
+        self.path = path
         # Initialise specialised print checklist variables
         self.sampleName = ""
         self.experimenter = ""
@@ -395,7 +396,7 @@ if __name__ == "__main__":
                 print(checklist)
                 wb = load_workbook(checklist)
                 ws = wb.active
-                p = Printing()
+                p = Printing(checklist)
                 p.populatePrintingClass(ws)
                 p.populatePrintingTasks(ws)
                 if (p.sampleName != None):
@@ -419,74 +420,76 @@ if __name__ == "__main__":
         # set up file to output to
         outputFile = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/output.xlsx"
         wb = Workbook()
-        ws = wb.create_sheet()
+        ws = wb.active
 
         exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
         
         # set up invariant section
         r = 1
-        ws.cell(row = r, column = 1).value = 'Print date'
-        ws.cell(row = r, column = 2).value  = 'Sample name'
-        ws.cell(row = r, column = 3).value  = 'Print rig'
-        ws.cell(row = r, column = 4).value  = 'Experimenter'
-        ws.cell(row = r, column = 5).value  = 'QC'
-        ws.cell(row = r, column = 6).value  = 'SOP version'
+        ws.cell(row = r, column = 1).value = 'Source checklist'
+        ws.cell(row = r, column = 2).value = 'Print date'
+        ws.cell(row = r, column = 3).value  = 'Sample name'
+        ws.cell(row = r, column = 4).value  = 'Print rig'
+        ws.cell(row = r, column = 5).value  = 'Experimenter'
+        ws.cell(row = r, column = 6).value  = 'QC'
+        ws.cell(row = r, column = 7).value  = 'SOP version'
 
         for internalData in internalDataList:
             r = r + 1
-            ws.cell(row = r, column = 1).value = internalData.printDate
-            ws.cell(row = r, column = 2).value  = internalData.sampleName
-            ws.cell(row = r, column = 3).value  = internalData.printRig
-            ws.cell(row = r, column = 4).value  = internalData.experimenter
-            ws.cell(row = r, column = 5).value  = internalData.qCPerson
-            ws.cell(row = r, column = 6).value  = internalData.sOPVersion
+            ws.cell(row = r, column = 1).value = internalData.path
+            ws.cell(row = r, column = 2).value = internalData.printDate
+            ws.cell(row = r, column = 3).value  = internalData.sampleName
+            ws.cell(row = r, column = 4).value  = internalData.printRig
+            ws.cell(row = r, column = 5).value  = internalData.experimenter
+            ws.cell(row = r, column = 6).value  = internalData.qCPerson
+            ws.cell(row = r, column = 7).value  = internalData.sOPVersion
 
-        r = 1
+        
+        col = 8
         for mt in m.data.tasks:
-            col = 7
             if mt.output:
                 v = vars(mt)
                 for key in v:
                     if key not in exclude_vars:
+                        r = 1
                         ws.cell(row = r, column = col).value = "%s: %s" % (mt.taskLabel, key)
+                        for internalData in internalDataList:
+                            print(internalData.path)
+                            r = r + 1
+                            for task in internalData.tasks:
+                                if (task.taskLabel == mt.taskLabel) and (task.taskCategory == mt.taskCategory):
+                                    vv = vars(task)
+                                    ws.cell(row = r, column = col).value = vv[key]
+                        
                         col = col + 1
 
                         #for internalData in internalDataList:
                             
 
         
-        for internalData in internalDataList:
-            print("SampleName: %s" % internalData.sampleName)
-            print("Experimenter: %s" % internalData.experimenter)
-            print("QC person: %s" % internalData.qCPerson)
-            print("Print date: %s" % internalData.printDate) 
-            print("")
-            for mt in m.data.tasks:
-                if (mt.output):
-                    for task in internalData.tasks:
-                        if (task.taskLabel == mt.taskLabel):
-                            print("")
-                            print(mt.taskLabel)
-                            v = vars(task)
-                            for key in v:
-                                exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
-                                if (key not in exclude_vars):
-                                    print("%s: " % key)
-                                    print(v[key])
+        #for internalData in internalDataList:
+        #    print("SampleName: %s" % internalData.sampleName)
+        #    print("Experimenter: %s" % internalData.experimenter)
+        #    print("QC person: %s" % internalData.qCPerson)
+        #    print("Print date: %s" % internalData.printDate) 
+        #    print("")
+        #    for mt in m.data.tasks:
+        #        if (mt.output):
+        #            for task in internalData.tasks:
+        #                if (task.taskLabel == mt.taskLabel):
+        #                    print("")
+        #                    print(mt.taskLabel)
+        #                    v = vars(task)
+        #                    for key in v:
+        #                        exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
+        #                        if (key not in exclude_vars):
+        #                            print("%s: " % key)
+        #                            print(v[key])
 
                 #i = 1 + i    
-            print("")
 
         # write to output file (googledoc?)
         wb.save(outputFile)
 
-    #wb = load_workbook('Z:\\SOPs\\Completed Checklists\\Data\\Printing\\Printing 1 2015-10-09 1130.xlsm')
-    #ws = wb.active
-
-    #printing = Printing()
-    #printing.populatePrintingClass(ws)
-    #v = vars(printing)
-    #print(', '.join("%s: %s" % item for item in v.items()))
-    #print(printing.sampleName)
 
 
