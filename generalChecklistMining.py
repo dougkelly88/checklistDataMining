@@ -1,5 +1,6 @@
 import os, time, string, datetime, tkFileDialog
 from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font
 from Tkinter import *
 from tkMessageBox import *
 import tkSimpleDialog
@@ -370,7 +371,7 @@ if __name__ == "__main__":
         #prompt = "Please choose a location in which to look for checklist spreadsheets..."
         #inputPath = chooseFolder(initialDir, prompt)
         inputPath = "Z:/SOPs/Completed Checklists/Data/Printing"
-        inputPath = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/Data/Printing"
+        #inputPath = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/Data/Printing"
 
         # generate list of checklist paths
         checklistList = []
@@ -415,6 +416,45 @@ if __name__ == "__main__":
                 print(t.taskLabel)
 
         # loop through classes and fields and parse to output format
+        # set up file to output to
+        outputFile = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/output.xlsx"
+        wb = Workbook()
+        ws = wb.create_sheet()
+
+        exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
+        
+        # set up invariant section
+        r = 1
+        ws.cell(row = r, column = 1).value = 'Print date'
+        ws.cell(row = r, column = 2).value  = 'Sample name'
+        ws.cell(row = r, column = 3).value  = 'Print rig'
+        ws.cell(row = r, column = 4).value  = 'Experimenter'
+        ws.cell(row = r, column = 5).value  = 'QC'
+        ws.cell(row = r, column = 6).value  = 'SOP version'
+
+        for internalData in internalDataList:
+            r = r + 1
+            ws.cell(row = r, column = 1).value = internalData.printDate
+            ws.cell(row = r, column = 2).value  = internalData.sampleName
+            ws.cell(row = r, column = 3).value  = internalData.printRig
+            ws.cell(row = r, column = 4).value  = internalData.experimenter
+            ws.cell(row = r, column = 5).value  = internalData.qCPerson
+            ws.cell(row = r, column = 6).value  = internalData.sOPVersion
+
+        r = 1
+        for mt in m.data.tasks:
+            col = 7
+            if mt.output:
+                v = vars(mt)
+                for key in v:
+                    if key not in exclude_vars:
+                        ws.cell(row = r, column = col).value = "%s: %s" % (mt.taskLabel, key)
+                        col = col + 1
+
+                        #for internalData in internalDataList:
+                            
+
+        
         for internalData in internalDataList:
             print("SampleName: %s" % internalData.sampleName)
             print("Experimenter: %s" % internalData.experimenter)
@@ -429,14 +469,16 @@ if __name__ == "__main__":
                             print(mt.taskLabel)
                             v = vars(task)
                             for key in v:
-                                #print(key)
-                                if (key != 'taskLabel') and (key != 'taskCategory') and (key != 'taskNumber') and (key != 'notes') and (key != 'output'):
+                                exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
+                                if (key not in exclude_vars):
                                     print("%s: " % key)
                                     print(v[key])
 
                 #i = 1 + i    
             print("")
+
         # write to output file (googledoc?)
+        wb.save(outputFile)
 
     #wb = load_workbook('Z:\\SOPs\\Completed Checklists\\Data\\Printing\\Printing 1 2015-10-09 1130.xlsm')
     #ws = wb.active
