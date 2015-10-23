@@ -416,8 +416,13 @@ if __name__ == "__main__":
         else:
             errorHandler(NOT_YET_SUPPORTED)
 
+        no_tasks = []
+        for internalData in internalDataList:
+            no_tasks.append(len(internalData.tasks))
+
+
         # prompt user for fields to include in summary      
-        m = outputSelectionDialog(internalDataList[0])
+        m = outputSelectionDialog(internalDataList[no_tasks.index(max(no_tasks))])
         m.root.mainloop()
         m.root.destroy()
         print('run past dialog, data to save:')
