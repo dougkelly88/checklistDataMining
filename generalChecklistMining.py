@@ -258,20 +258,29 @@ class Printing(ChecklistBase):
         """ Outputs rig #, date """
         output = [""]*2
         if isinstance(sampleID, basestring):
-            splitString = string.split(sampleID, "-")
-            if len(splitString)==3:
+            dashes = sampleID.count('-')
+            if (dashes == 2):
+                splitString = string.split(sampleID, "-")
+            #if len(splitString)==3:
                 output[0] = splitString[0][1]
                 d=splitString[1][4:]
                 m=splitString[1][2:4]
                 y=splitString[1][0:2]
-                output[1] = "%s/%s/20%s" % (d, m, y)
+                
+            elif (dashes == 1):
+                output[0] = sampleID[1]
+                y = sampleID[3:5]
+                m = sampleID[5:7]
+                d = sampleID[7:9]
+
             else:
                 #TODO: log warning about unexpected sample ID format, taking best guess
                 output[0] = sampleID[1]
                 y = sampleID[2:4]
                 m = sampleID[4:6]
                 d = sampleID[6:8]
-                output[1] = "%s/%s/20%s" % (d, m, y)
+                
+            output[1] = "%s/%s/20%s" % (d, m, y)
         return output
 
     def populatePrintingTasks(self, ws):
