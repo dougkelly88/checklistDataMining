@@ -21,6 +21,7 @@ class outputSelectionDialog(object):
         self.data = internalData
         print(self.data)
         root = self.root = Tk()
+        self.all = IntVar()
         self.sizex = 400
         self.sizey = 600
         self.posx  = 100
@@ -40,6 +41,9 @@ class outputSelectionDialog(object):
 
         i = 0
         self.vars = []
+        chkAll = Checkbutton(frm_2, text = 'All', variable = self.all)
+        chkAll.pack(padx = 0, pady = 5, anchor = W)
+        chkAll['command'] = self.c2_action
         for t in self.data.tasks:
             txt = "%s: %s" % (t.taskCategory, t.taskLabel)
             var = IntVar()
@@ -58,6 +62,21 @@ class outputSelectionDialog(object):
     def b1_action(self, event=None):
         #print('quitting...')
         self.root.quit()
+
+    def c2_action(self, event = None):
+        i = 0
+        for v in self.vars:
+            if (self.all.get() == 1):
+                self.data.tasks[i].output = True
+                v.set(1)
+                print(self.data.tasks[i].taskLabel)
+                print(self.data.tasks[i].output)
+            else:
+                self.data.tasks[i].output = False
+                v.set(0)
+                print(self.data.tasks[i].taskLabel)
+                print(self.data.tasks[i].output)
+            i = i+1
 
     def c1_action(self, event = None):
         i = 0
@@ -458,9 +477,7 @@ if __name__ == "__main__":
             ws.cell(row = r, column = 6).value  = internalData.qCPerson
             ws.cell(row = r, column = 7).value  = internalData.sOPVersion
 
-        
         col = 8
-        col_filled = False
         for mt in m.data.tasks:
             if mt.output:
                 v = vars(mt)
