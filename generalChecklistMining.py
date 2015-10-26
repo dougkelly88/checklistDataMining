@@ -460,12 +460,14 @@ if __name__ == "__main__":
 
         
         col = 8
+        col_filled = False
         for mt in m.data.tasks:
             if mt.output:
                 v = vars(mt)
                 for key in v:
                     if key not in exclude_vars:
                         r = 1
+                        col_filled = False
                         ws.cell(row = r, column = col).value = "%s: %s" % (mt.taskLabel, key)
                         for internalData in internalDataList:
                             print(internalData.path)
@@ -473,9 +475,11 @@ if __name__ == "__main__":
                             for task in internalData.tasks:
                                 if (task.taskLabel == mt.taskLabel) and (task.taskCategory == mt.taskCategory):
                                     vv = vars(task)
+                                    if (vv[key] != None) and (vv[key] != ""):
+                                        col_filled = True
                                     ws.cell(row = r, column = col).value = vv[key]
-                        
-                        col = col + 1
+                        if col_filled:
+                            col = col + 1
 
                         #for internalData in internalDataList:
                             
