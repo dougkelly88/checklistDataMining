@@ -6,6 +6,7 @@ from tkMessageBox import *
 import tkSimpleDialog
 import inspect
 
+# Constants
 MODE_APPEND = 0
 MODE_NEW = 1
 CHECKLIST_FILE_FORMAT = '.xlsm'
@@ -19,7 +20,6 @@ class outputSelectionDialog(object):
     """ Dialog box allowing selection of output params"""
     def __init__(self, internalData):
         self.data = internalData
-        print(self.data)
         root = self.root = Tk()
         self.all = IntVar()
         self.sizex = 400
@@ -69,14 +69,15 @@ class outputSelectionDialog(object):
             if (self.all.get() == 1):
                 self.data.tasks[i].output = True
                 v.set(1)
-                print(self.data.tasks[i].taskLabel)
-                print(self.data.tasks[i].output)
+                #print(self.data.tasks[i].taskLabel)
+                #print(self.data.tasks[i].output)
             else:
                 self.data.tasks[i].output = False
                 v.set(0)
-                print(self.data.tasks[i].taskLabel)
-                print(self.data.tasks[i].output)
+            print(self.data.tasks[i].taskLabel)
+            print(self.data.tasks[i].output)
             i = i+1
+
 
     def c1_action(self, event = None):
         i = 0
@@ -85,8 +86,8 @@ class outputSelectionDialog(object):
                 self.data.tasks[i].output = True
             else:
                 self.data.tasks[i].output = False
-            #print(self.data.tasks[i].taskLabel)
-            #print(self.data.tasks[i].output)
+            print(self.data.tasks[i].taskLabel)
+            print(self.data.tasks[i].output)
             i = i+1
 
 class ChecklistBase(object):
@@ -327,7 +328,7 @@ class Printing(ChecklistBase):
 
 def chooseFolder(initialdir, prompt):
     import tkFileDialog
-
+    root = Tk()
     try:
         options = {}
         options['initialdir']=initialdir
@@ -340,10 +341,12 @@ def chooseFolder(initialdir, prompt):
     except IOError:
         errorHandler(INVALID_PATH)
 
+    root.destroy()
     return file
 
 def chooseOutputFile(initialdir, initialfile):
     try:
+        root = Tk()
         options = {}
         options['initialdir']=initialdir
         options['initialfile'] = initialfile
@@ -359,6 +362,7 @@ def chooseOutputFile(initialdir, initialfile):
     except IOError:
         errorHandler(INVALID_PATH)
 
+    root.destroy()
     return file
 
 def errorHandler(message):
@@ -392,15 +396,12 @@ if __name__ == "__main__":
         print("Mode = NEW")
         # prompt user for output file name/location
         # TODO: add googledocs option?
-        #initialDir = "Z:\\SOPs\\Completed Checklists\\Data"
-        #initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
-        #outputFile = chooseOutputFile(initialDir, initialFile)
+        initialDir = "//base4share/share/SOPs/Completed Checklists/Data/Printing"
         
         # prompt user for place to look for checklists
-        #prompt = "Please choose a location in which to look for checklist spreadsheets..."
-        #inputPath = chooseFolder(initialDir, prompt)
-        inputPath = "Z:/SOPs/Completed Checklists/Data/Printing"
-        #inputPath = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/Data/Printing"
+        prompt = "Please choose a location in which to look for checklist spreadsheets..."
+        inputPath = chooseFolder(initialDir, prompt)
+        #inputPath = "//base4share/share/SOPs/Completed Checklists/Data/Printing"
 
         # generate list of checklist paths
         checklistList = []
@@ -451,7 +452,9 @@ if __name__ == "__main__":
 
         # loop through classes and fields and parse to output format
         # set up file to output to
-        outputFile = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/output.xlsx"
+        initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
+        outputFile = chooseOutputFile(initialDir, initialFile)
+        #outputFile = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/output.xlsx"
         wb = Workbook()
         ws = wb.active
 
@@ -497,31 +500,6 @@ if __name__ == "__main__":
                                     ws.cell(row = r, column = col).value = vv[key]
                         if col_filled:
                             col = col + 1
-
-                        #for internalData in internalDataList:
-                            
-
-        
-        #for internalData in internalDataList:
-        #    print("SampleName: %s" % internalData.sampleName)
-        #    print("Experimenter: %s" % internalData.experimenter)
-        #    print("QC person: %s" % internalData.qCPerson)
-        #    print("Print date: %s" % internalData.printDate) 
-        #    print("")
-        #    for mt in m.data.tasks:
-        #        if (mt.output):
-        #            for task in internalData.tasks:
-        #                if (task.taskLabel == mt.taskLabel):
-        #                    print("")
-        #                    print(mt.taskLabel)
-        #                    v = vars(task)
-        #                    for key in v:
-        #                        exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
-        #                        if (key not in exclude_vars):
-        #                            print("%s: " % key)
-        #                            print(v[key])
-
-                #i = 1 + i    
 
         # write to output file (googledoc?)
         wb.save(outputFile)
