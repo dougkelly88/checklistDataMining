@@ -1,10 +1,12 @@
-import os, time, string, datetime, tkFileDialog
+import os, time, string, datetime, tkFileDialog, ast
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 from Tkinter import *
 from tkMessageBox import *
 import tkSimpleDialog
 import inspect
+import requests, gspread
+from oauth2client.client import SignedJwtAssertionCredentials
 
 # Constants
 MODE_APPEND = 0
@@ -321,13 +323,33 @@ class Printing(ChecklistBase):
                     t.populate(ws, r)
                     self.tasks.append(t)
 
+def authenticate_google_docs():
+    #f = file(os.path.join('C:/Users/d.kelly/Desktop/Python/bulkSummariser-f4e730f107d4.p12'), 'rb')
+    f = file(os.path.join('bulkSummariser-f4e730f107d4.p12'), 'rb')
+    SIGNED_KEY = f.read()
+    f.close()
+    scope = ['https://spreadsheets.google.com/feeds', 'https://docs.google.com/feeds']
+    credentials = SignedJwtAssertionCredentials('d.kelly@base4.co.uk', SIGNED_KEY, scope)
 
+    data = {
+        'refresh_token' : '1/J9DflNyNnx2J9WnWtHsKnH9YDTTBTuoz3tJtnSXRtLc',
+        'client_id' : '326340397307-lgicfbcjmu9863pjjkfrn0c5dviqsb42.apps.googleusercontent.com',
+        'client_secret' : 'xeNtki_QWyoLaGEjYqtzF5si',
+        'grant_type' : 'refresh_token',
+    }
 
+    r = requests.post('https://accounts.google.com/o/oauth2/token', data = data)
+    credentials.access_token = ast.literal_eval(r.text)['access_token']
 
-#class PrintheadPrinting(ChecklistBase):
+    gc = gspread.authorize(credentials)
+    return gc
 
 def chooseFolder(initialdir, prompt):
-    import tkFileDialog
+    try:
+        import tkFileDialog
+    except:
+        from tkinter import filedialog as tkFileDialog
+
     root = Tk()
     try:
         options = {}
@@ -373,7 +395,8 @@ def errorHandler(message):
 
 if __name__ == "__main__":
 
-    mode = MODE_NEW
+    #mode = MODE_NEW
+    mode = MODE_APPEND
     xml_export = False;
 
     if (mode == MODE_APPEND):
@@ -391,6 +414,11 @@ if __name__ == "__main__":
         # append to output file - first checking that write is possible and warning user (email?) if not
         # TODO: add option for googlesheets export
         # OPTION: re-export checklist data in XML format?
+
+        gc = authenticate_google_docs()
+        gsh = gc.open("Sample register")
+        gws = gsh.worksheet("Sample register")
+        print(gws.row_values(1))
 
     if (mode == MODE_NEW):
         print("Mode = NEW")
