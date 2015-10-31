@@ -11,6 +11,7 @@ from oauth2client.client import SignedJwtAssertionCredentials
 # Constants
 MODE_APPEND = 0
 MODE_NEW = 1
+MODE_UPDATEWEBFROMCL = 2
 CHECKLIST_FILE_FORMAT = '.xlsm'
 
 # Error messages
@@ -101,6 +102,10 @@ class ChecklistBase(object):
         self.qCPerson = ""
         self.tasks = []
         self.path = ""
+
+    def returnTaskByLabel(self, label):
+        for task in self.tasks:
+
     
 class TaskBase(object):
     """ Base class for task-level common properties"""
@@ -119,6 +124,10 @@ class TaskBase(object):
         self.startedAt = ws.cell(row = r, column = 7).value
         self.timeTaken = ws.cell(row = r, column = 9).value
         self.output = False
+
+    def returnTaskByLabel(self, label):
+        if (taskLabel == label):
+            return self
 
 def identifyCorrectClass(description):
         description = description.lower()
@@ -393,11 +402,67 @@ def errorHandler(message):
     # TODO: log file? send email?
     exit()
 
+def numberToLetters(q):
+    q = q - 1
+    result = ''
+    while q >= 0:
+        remain = q % 26
+        result = chr(remain+65) + result;
+        q = q//26 - 1
+    return result
+                
+
+def formatToGS(p, gws):
+
+    # find row, or make new row
+    sampleNamesFromGS = gws.col_values(1)
+    if p.sampleName in sampleNamesFromGS:
+        row = sampleNamesFromGS.index(p.sampleName)
+    else:
+        row = len(sampleNamesFromGS) + 1
+
+    headings = gws.row_values(1)
+    first_col = numberToLetters(headings.index("Protocol version"))
+    last_col = numberToLetters(headings.index("Pressure [kPa]"))
+    cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
+    cells = gws.range(cellrange)
+    headings = headings[headings.index("Protocol version"):headings.index("Pressure [kPa]")]
+
+    p = Printing()
+
+    for heading in headings:
+        if (heading == "Protocol version"):
+            cells[headings.index(heading)].value = p.sOPVersion
+        if (heading == "Rig"):
+            cells[headings.index(heading)].value = 'P%d' % p.printRig
+        if (heading == "Printer"):
+            cells[headings.index(heading)].value = p.experimenter
+        if (heading == "Slide CA"):
+            
+
+
+
 if __name__ == "__main__":
 
     #mode = MODE_NEW
-    mode = MODE_APPEND
+    mode = MODE_UPDATEWEBFROMCL
     xml_export = False;
+
+    if (mode == MODE_UPDATEWEBFROMCL):
+        gc = authenticate_google_docs()
+        gsh = gc.open("Sample register")
+        gws = gsh.worksheet("Sample register")
+        
+
+        # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
+        checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
+
+        p = Printing(checklistPath)
+        p.populatePrintingClass(ws)
+        p.populatePrintingTasks(ws)
+
+
+
 
     if (mode == MODE_APPEND):
         print("Mode = APPEND")
@@ -414,11 +479,6 @@ if __name__ == "__main__":
         # append to output file - first checking that write is possible and warning user (email?) if not
         # TODO: add option for googlesheets export
         # OPTION: re-export checklist data in XML format?
-
-        gc = authenticate_google_docs()
-        gsh = gc.open("Sample register")
-        gws = gsh.worksheet("Sample register")
-        print(gws.row_values(1))
 
     if (mode == MODE_NEW):
         print("Mode = NEW")
