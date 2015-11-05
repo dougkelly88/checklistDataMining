@@ -1,4 +1,4 @@
-import os, time, string, datetime, tkFileDialog, ast
+import os, time, string, datetime, tkFileDialog, ast, webbrowser, base64, httplib2
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 from Tkinter import *
@@ -7,6 +7,9 @@ import tkSimpleDialog
 import inspect
 import requests, gspread
 from oauth2client.client import SignedJwtAssertionCredentials
+from email.mime.text import MIMEText
+from apiclient.discovery import build
+from apiclient import errors
 
 # Constants
 MODE_APPEND = 0
@@ -105,6 +108,8 @@ class ChecklistBase(object):
 
     def returnTaskByLabel(self, label):
         for task in self.tasks:
+            if (task.taskLabel == label):
+                return task
 
     
 class TaskBase(object):
@@ -283,7 +288,7 @@ class Printing(ChecklistBase):
         self.experimenter = ws['E10'].value
         self.qCPerson = ws['E12'].value
         self.printDate = self.parseSampleID(self.sampleName)[1]
-        self.printRig = "Rig %s" % self.parseSampleID(self.sampleName)[0]
+        self.printRig = "P%s" % self.parseSampleID(self.sampleName)[0]
 
     def parseSampleID(self, sampleID):
         """ Outputs rig #, date """
@@ -311,7 +316,7 @@ class Printing(ChecklistBase):
                 m = sampleID[4:6]
                 d = sampleID[6:8]
                 
-            output[1] = "%s/%s/20%s" % (d, m, y)
+            output[1] = "%s%s%s" % (y, m, d)
         return output
 
     def populatePrintingTasks(self, ws):
@@ -337,7 +342,7 @@ def authenticate_google_docs():
     f = file(os.path.join('bulkSummariser-f4e730f107d4.p12'), 'rb')
     SIGNED_KEY = f.read()
     f.close()
-    scope = ['https://spreadsheets.google.com/feeds', 'https://docs.google.com/feeds']
+    scope = ['https://spreadsheets.google.com/feeds', 'https://docs.google.com/feeds', 'https://www.googleapis.com/auth/gmail.send']
     credentials = SignedJwtAssertionCredentials('d.kelly@base4.co.uk', SIGNED_KEY, scope)
 
     data = {
@@ -351,7 +356,59 @@ def authenticate_google_docs():
     credentials.access_token = ast.literal_eval(r.text)['access_token']
 
     gc = gspread.authorize(credentials)
-    return gc
+    return credentials
+    #return gc
+
+def SendMessage(service, user_id, message):
+  """Send an email message.
+
+  Args:
+    service: Authorized Gmail API service instance.
+    user_id: User's email address. The special value "me"
+    can be used to indicate the authenticated user.
+    message: Message to be sent.
+
+  Returns:
+    Sent Message.
+  """
+  try:
+    message = (service.users().messages().send(userId=user_id, body=message)
+               .execute())
+    print('Message Id: %s' % message['id'])
+    return message
+  except errors.HttpError as e:
+    print(e)
+  
+def build_service(credentials):
+  """Build a Gmail service object.
+
+  Args:
+    credentials: OAuth 2.0 credentials.
+
+  Returns:
+    Gmail service object.
+  """
+  http = httplib2.Http()
+  http = credentials.authorize(http)
+  return build('gmail', 'v1', http=http)
+
+def CreateMessage(sender, to, subject, message_text):
+  """Create a message for an email.
+
+  Args:
+    sender: Email address of the sender.
+    to: Email address of the receiver.
+    subject: The subject of the email message.
+    message_text: The text of the email message.
+
+  Returns:
+    An object containing a base64url encoded email object.
+  """
+  message = MIMEText(message_text)
+  message['to'] = to
+  message['from'] = sender
+  message['subject'] = subject
+  return {'raw': base64.urlsafe_b64encode(message.as_string())}
 
 def chooseFolder(initialdir, prompt):
     try:
@@ -411,7 +468,6 @@ def numberToLetters(q):
         q = q//26 - 1
     return result
                 
-
 def formatToGS(p, gws):
 
     # find row, or make new row
@@ -420,28 +476,63 @@ def formatToGS(p, gws):
         row = sampleNamesFromGS.index(p.sampleName)
     else:
         row = len(sampleNamesFromGS) + 1
+        gws.update_cell(row, 1, p.sampleName)
 
     headings = gws.row_values(1)
-    first_col = numberToLetters(headings.index("Protocol version"))
-    last_col = numberToLetters(headings.index("Pressure [kPa]"))
+    first_col = numberToLetters(headings.index("Protocol version") + 1)
+    last_col = numberToLetters(headings.index("Pressure [kPa]") + 1) 
     cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
     cells = gws.range(cellrange)
     headings = headings[headings.index("Protocol version"):headings.index("Pressure [kPa]")]
 
-    p = Printing()
-
     for heading in headings:
         if (heading == "Protocol version"):
-            cells[headings.index(heading)].value = p.sOPVersion
+            cells[headings.index(heading) + 1].value = p.sOPVersion
         if (heading == "Rig"):
-            cells[headings.index(heading)].value = 'P%d' % p.printRig
+            cells[headings.index(heading) + 1].value = p.printRig
         if (heading == "Printer"):
-            cells[headings.index(heading)].value = p.experimenter
+            cells[headings.index(heading) + 1].value = p.experimenter
         if (heading == "Slide CA"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Slide").CA
+        if (heading == "Slide batch"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Slide").batch
+        if (heading == "Tip size"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Tip").size
+        if (heading == "Tip batch"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Tip").batch
+        if (heading == "Tip ID"):
+            cells[headings.index(heading) + 1].value = "%s%s" % (p.printDate, p.returnTaskByLabel("Tip").ID)
+        if (heading == "Room Temperature"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Note room temperature").temperature
+        if (heading == "Room Humidity"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Note room humidity").humidity
+        if (heading == "Humidity low"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity
+        if (heading == "Humidity high"):
+            try:
+                cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity
+            except:
+                cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Turn humidifier to high").humidity
+        if (heading == "Print time"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").timeTaken
+        if (heading == "Print voltage (AC) / V x 100"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").voltage
+        if (heading == "Voltage frequency (sine) /Hz"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").freq
+        if (heading == "Dwell time"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").dwell
+        if (heading == "Step size"):
+            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").step
+        if (heading == "Pressure [kPa]"):
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Print").pressure
+
+    #print(p.printDate)
+    #for cell in cells:
+    #    print(cell)
+
+    gws.update_cells(cells)
+    webbrowser.open('https://docs.google.com/spreadsheets/d/1UboAesRlMSn1hhiH8oG-5DT-6q3KHFZjj80GKTymsys/edit#gid=0', 2, True)
             
-
-
-
 if __name__ == "__main__":
 
     #mode = MODE_NEW
@@ -449,17 +540,27 @@ if __name__ == "__main__":
     xml_export = False;
 
     if (mode == MODE_UPDATEWEBFROMCL):
+        a = CreateMessage('d.kelly@base4.co.uk', 'd.kelly@base4.co.uk', 'hello', 'hello')
+        
         gc = authenticate_google_docs()
+        SendMessage(build_service(gc), "me", a)
         gsh = gc.open("Sample register")
         gws = gsh.worksheet("Sample register")
+        gsh = gc.open("Dummy sample register")
+        gws = gsh.worksheet("Sheet1")
         
 
         # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
-        checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
+        #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
+        checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-11-04 1732.xlsm'
 
+        wb = load_workbook(checklistPath)
+        ws = wb.active
         p = Printing(checklistPath)
         p.populatePrintingClass(ws)
         p.populatePrintingTasks(ws)
+        formatToGS(p, gws)
+
 
 
 
