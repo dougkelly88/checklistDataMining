@@ -1,4 +1,4 @@
-import os, time, string, datetime, tkFileDialog, ast, webbrowser, base64, httplib2
+import os, time, string, datetime, tkFileDialog, ast, webbrowser, sys
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 from Tkinter import *
@@ -7,8 +7,6 @@ import tkSimpleDialog
 import inspect
 import requests, gspread
 from oauth2client.client import SignedJwtAssertionCredentials
-from email.mime.text import MIMEText
-from apiclient.discovery import build
 from apiclient import errors
 
 # Constants
@@ -111,7 +109,6 @@ class ChecklistBase(object):
             if (task.taskLabel == label):
                 return task
 
-    
 class TaskBase(object):
     """ Base class for task-level common properties"""
     def __init__(self):
@@ -233,7 +230,7 @@ class Printing(ChecklistBase):
                     if ("Size" in c):
                         self.size = ws.cell(row = r, column = col+1).value
                     if ("batch" in c.lower()):
-                        self.batch = ws.cell(row = r, column = col+1).value
+                        self.batch = '%s-%s' % (ws.cell(row = r, column = col+1).value, ws.cell(row = r, column = col+3).value)
                     if ("ID" in c):
                         self.ID = ws.cell(row = r, column = col+1).value
 
@@ -356,59 +353,7 @@ def authenticate_google_docs():
     credentials.access_token = ast.literal_eval(r.text)['access_token']
 
     gc = gspread.authorize(credentials)
-    return credentials
-    #return gc
-
-def SendMessage(service, user_id, message):
-  """Send an email message.
-
-  Args:
-    service: Authorized Gmail API service instance.
-    user_id: User's email address. The special value "me"
-    can be used to indicate the authenticated user.
-    message: Message to be sent.
-
-  Returns:
-    Sent Message.
-  """
-  try:
-    message = (service.users().messages().send(userId=user_id, body=message)
-               .execute())
-    print('Message Id: %s' % message['id'])
-    return message
-  except errors.HttpError as e:
-    print(e)
-  
-def build_service(credentials):
-  """Build a Gmail service object.
-
-  Args:
-    credentials: OAuth 2.0 credentials.
-
-  Returns:
-    Gmail service object.
-  """
-  http = httplib2.Http()
-  http = credentials.authorize(http)
-  return build('gmail', 'v1', http=http)
-
-def CreateMessage(sender, to, subject, message_text):
-  """Create a message for an email.
-
-  Args:
-    sender: Email address of the sender.
-    to: Email address of the receiver.
-    subject: The subject of the email message.
-    message_text: The text of the email message.
-
-  Returns:
-    An object containing a base64url encoded email object.
-  """
-  message = MIMEText(message_text)
-  message['to'] = to
-  message['from'] = sender
-  message['subject'] = subject
-  return {'raw': base64.urlsafe_b64encode(message.as_string())}
+    return gc
 
 def chooseFolder(initialdir, prompt):
     try:
@@ -469,11 +414,12 @@ def numberToLetters(q):
     return result
                 
 def formatToGS(p, gws):
+    #errorHandler("Unexpected error: sys.exc_info()[0])")
 
     # find row, or make new row
     sampleNamesFromGS = gws.col_values(1)
     if p.sampleName in sampleNamesFromGS:
-        row = sampleNamesFromGS.index(p.sampleName)
+        row = sampleNamesFromGS.index(p.sampleName) + 1
     else:
         row = len(sampleNamesFromGS) + 1
         gws.update_cell(row, 1, p.sampleName)
@@ -487,42 +433,42 @@ def formatToGS(p, gws):
 
     for heading in headings:
         if (heading == "Protocol version"):
-            cells[headings.index(heading) + 1].value = p.sOPVersion
+            cells[headings.index(heading) ].value = 'v %1.2f' % p.sOPVersion
         if (heading == "Rig"):
-            cells[headings.index(heading) + 1].value = p.printRig
+            cells[headings.index(heading) ].value = p.printRig
         if (heading == "Printer"):
-            cells[headings.index(heading) + 1].value = p.experimenter
+            cells[headings.index(heading) ].value = p.experimenter
         if (heading == "Slide CA"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Slide").CA
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide").CA
         if (heading == "Slide batch"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Slide").batch
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide").batch
         if (heading == "Tip size"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Tip").size
-        if (heading == "Tip batch"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Tip").batch
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Tip").size
+        if (heading == "Tip Batch"):
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Tip").batch
         if (heading == "Tip ID"):
-            cells[headings.index(heading) + 1].value = "%s%s" % (p.printDate, p.returnTaskByLabel("Tip").ID)
+            cells[headings.index(heading) ].value = "%s%s" % (p.printDate, p.returnTaskByLabel("Tip").ID)
         if (heading == "Room Temperature"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Note room temperature").temperature
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room temperature").temperature
         if (heading == "Room Humidity"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Note room humidity").humidity
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room humidity").humidity * 100
         if (heading == "Humidity low"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity * 100
         if (heading == "Humidity high"):
             try:
-                cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity
+                cells[headings.index(heading) ].value = p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity * 100
             except:
-                cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Turn humidifier to high").humidity
+                cells[headings.index(heading) ].value = p.returnTaskByLabel("Turn humidifier to high").humidity * 100
         if (heading == "Print time"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").timeTaken
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Print").timeTaken
         if (heading == "Print voltage (AC) / V x 100"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").voltage
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Print").voltage
         if (heading == "Voltage frequency (sine) /Hz"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").freq
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Print").freq
         if (heading == "Dwell time"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").dwell
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Print").dwell
         if (heading == "Step size"):
-            cells[headings.index(heading) + 1].value = p.returnTaskByLabel("Print").step
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Print").step
         if (heading == "Pressure [kPa]"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Print").pressure
 
@@ -535,163 +481,179 @@ def formatToGS(p, gws):
             
 if __name__ == "__main__":
 
-    #mode = MODE_NEW
-    mode = MODE_UPDATEWEBFROMCL
-    xml_export = False;
+    try:
 
-    if (mode == MODE_UPDATEWEBFROMCL):
-        a = CreateMessage('d.kelly@base4.co.uk', 'd.kelly@base4.co.uk', 'hello', 'hello')
-        
-        gc = authenticate_google_docs()
-        SendMessage(build_service(gc), "me", a)
-        gsh = gc.open("Sample register")
-        gws = gsh.worksheet("Sample register")
-        gsh = gc.open("Dummy sample register")
-        gws = gsh.worksheet("Sheet1")
-        
-
-        # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
-        #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
-        checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-11-04 1732.xlsm'
-
-        wb = load_workbook(checklistPath)
-        ws = wb.active
-        p = Printing(checklistPath)
-        p.populatePrintingClass(ws)
-        p.populatePrintingTasks(ws)
-        formatToGS(p, gws)
-
-
-
-
-
-    if (mode == MODE_APPEND):
-        print("Mode = APPEND")
-        # prompt user to choose type of checklist being summarised, or do so automatically?
-        # prompt user for output file, or take from arguments to allow scheduled running?
-        # identify output file
-        # identify date of last entry
-        # identify checklists since last entry
-        # loop through these checklists and add a checklist class for each case to a List
-        # from output file column titles identify the fields to export - if fields don't exist, add warning text to these entries?
-        # from output file, determine list of ID fields that can be used to confirm that new entries don't already exist
-        # perform check for exisiting entries and delete those classes from the List
-        # loop through classes and fields and parse to output format
-        # append to output file - first checking that write is possible and warning user (email?) if not
-        # TODO: add option for googlesheets export
-        # OPTION: re-export checklist data in XML format?
-
-    if (mode == MODE_NEW):
-        print("Mode = NEW")
-        # prompt user for output file name/location
-        # TODO: add googledocs option?
-        initialDir = "//base4share/share/SOPs/Completed Checklists/Data/Printing"
-        
-        # prompt user for place to look for checklists
-        prompt = "Please choose a location in which to look for checklist spreadsheets..."
-        inputPath = chooseFolder(initialDir, prompt)
-        #inputPath = "//base4share/share/SOPs/Completed Checklists/Data/Printing"
-
-        # generate list of checklist paths
-        checklistList = []
-        for root, dirs, files in os.walk(inputPath):
-            for basename in files:
-                if CHECKLIST_FILE_FORMAT in basename:
-                    checklistList.append(os.path.join(root, basename))
-        #print(checklistList)
-        if (len(checklistList) == 0):
-            errorHandler(FILES_LENGTH_ZERO)
-        
-        # prompt user for checklist type - or get from place to look for checklists?
-        # for now, assume that data is in Z:\SOPs\Completed Checklists\Data and figure out which class to use from which folder is selected immediately below
-        internalDataList = []
-        dummy = os.path.split(checklistList[0])
-        testString = dummy[0].split('/Data/')
-        print(testString)
-        if (testString[1] == 'Printing'):
-            print("Use Printing class")
-            for checklist in checklistList:
-                print(checklist)
-                wb = load_workbook(checklist)
-                ws = wb.active
-                p = Printing(checklist)
-                p.populatePrintingClass(ws)
-                p.populatePrintingTasks(ws)
-                if (p.sampleName != None):
-                    if ("ppl" not in p.sampleName.lower()):
-                        internalDataList.append(p)
-        elif (testString[1] == 'Slide coating - fluorinated silane'):
-            print("Use SlideCoating class")
+        #mode = MODE_NEW
+        if len(sys.argv) == 1:
+            mode = MODE_NEW
+            print('Mode = generate new Excel spreadsheet summary')
+        if len(sys.argv) == 2 :
+            mode = MODE_UPDATEWEBFROMCL
+            checklistPath = sys.argv[1]
+            print('Mode = update google sheet')
+        elif len(sys.argv) == 3:
+            mode = MODE_APPEND
+            checklistPath = sys.argv[1]
+            outputFile = sys.argv[2]
+            print('Mode = append to existing Excel sheet')
         else:
-            errorHandler(NOT_YET_SUPPORTED)
+            errorHandler('Too many arguments passed!')
 
-        no_tasks = []
-        for internalData in internalDataList:
-            no_tasks.append(len(internalData.tasks))
+        mode = MODE_UPDATEWEBFROMCL
 
+        xml_export = False;
 
-        # prompt user for fields to include in summary      
-        m = outputSelectionDialog(internalDataList[no_tasks.index(max(no_tasks))])
-        m.root.mainloop()
-        m.root.destroy()
-        print('run past dialog, data to save:')
-        for t in m.data.tasks:
-            if (t.output):
-                print(t.taskLabel)
-
-        # loop through classes and fields and parse to output format
-        # set up file to output to
-        initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
-        outputFile = chooseOutputFile(initialDir, initialFile)
-        #outputFile = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/output.xlsx"
-        wb = Workbook()
-        ws = wb.active
-
-        exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
+        if (mode == MODE_UPDATEWEBFROMCL):
         
-        # set up invariant section
-        r = 1
-        ws.cell(row = r, column = 1).value = 'Source checklist'
-        ws.cell(row = r, column = 2).value = 'Print date'
-        ws.cell(row = r, column = 3).value  = 'Sample name'
-        ws.cell(row = r, column = 4).value  = 'Print rig'
-        ws.cell(row = r, column = 5).value  = 'Experimenter'
-        ws.cell(row = r, column = 6).value  = 'QC'
-        ws.cell(row = r, column = 7).value  = 'SOP version'
+            gc = authenticate_google_docs()
+            gsh = gc.open("Sample register")
+            gws = gsh.worksheet("Sample register")
+            gsh = gc.open("Dummy sample register")
+            gws = gsh.worksheet("Sheet1")
+        
 
-        for internalData in internalDataList:
-            r = r + 1
-            ws.cell(row = r, column = 1).value = internalData.path
-            ws.cell(row = r, column = 2).value = internalData.printDate
-            ws.cell(row = r, column = 3).value  = internalData.sampleName
-            ws.cell(row = r, column = 4).value  = internalData.printRig
-            ws.cell(row = r, column = 5).value  = internalData.experimenter
-            ws.cell(row = r, column = 6).value  = internalData.qCPerson
-            ws.cell(row = r, column = 7).value  = internalData.sOPVersion
+            # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
+            #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
+            #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-11-04 1732.xlsm'
+            #checklistPath = '//base4share/share/Doug/P1-151102-A - Copy.xlsm'
 
-        col = 8
-        for mt in m.data.tasks:
-            if mt.output:
-                v = vars(mt)
-                for key in v:
-                    if key not in exclude_vars:
-                        r = 1
-                        col_filled = False
-                        ws.cell(row = r, column = col).value = "%s: %s" % (mt.taskLabel, key)
-                        for internalData in internalDataList:
-                            print(internalData.path)
-                            r = r + 1
-                            for task in internalData.tasks:
-                                if (task.taskLabel == mt.taskLabel) and (task.taskCategory == mt.taskCategory):
-                                    vv = vars(task)
-                                    if (vv[key] != None) and (vv[key] != ""):
-                                        col_filled = True
-                                    ws.cell(row = r, column = col).value = vv[key]
-                        if col_filled:
-                            col = col + 1
+            wb = load_workbook(checklistPath)
+            ws = wb.active
+            p = Printing(checklistPath)
+            p.populatePrintingClass(ws)
+            p.populatePrintingTasks(ws)
+            formatToGS(p, gws)
 
-        # write to output file (googledoc?)
-        wb.save(outputFile)
+        if (mode == MODE_APPEND):
+            print("Mode = APPEND")
+            # prompt user to choose type of checklist being summarised, or do so automatically?
+            # prompt user for output file, or take from arguments to allow scheduled running?
+            # identify output file
+            # identify date of last entry
+            # identify checklists since last entry
+            # loop through these checklists and add a checklist class for each case to a List
+            # from output file column titles identify the fields to export - if fields don't exist, add warning text to these entries?
+            # from output file, determine list of ID fields that can be used to confirm that new entries don't already exist
+            # perform check for exisiting entries and delete those classes from the List
+            # loop through classes and fields and parse to output format
+            # append to output file - first checking that write is possible and warning user (email?) if not
+            # TODO: add option for googlesheets export
+            # OPTION: re-export checklist data in XML format?
+            print("nonsense")
 
+
+        if (mode == MODE_NEW):
+            print("Mode = NEW")
+            # prompt user for output file name/location
+            # TODO: add googledocs option?
+            initialDir = "//base4share/share/SOPs/Completed Checklists/Data/Printing"
+        
+            # prompt user for place to look for checklists
+            prompt = "Please choose a location in which to look for checklist spreadsheets..."
+            inputPath = chooseFolder(initialDir, prompt)
+            #inputPath = "//base4share/share/SOPs/Completed Checklists/Data/Printing"
+
+            # generate list of checklist paths
+            checklistList = []
+            for root, dirs, files in os.walk(inputPath):
+                for basename in files:
+                    if CHECKLIST_FILE_FORMAT in basename:
+                        checklistList.append(os.path.join(root, basename))
+            #print(checklistList)
+            if (len(checklistList) == 0):
+                errorHandler(FILES_LENGTH_ZERO)
+        
+            # prompt user for checklist type - or get from place to look for checklists?
+            # for now, assume that data is in Z:\SOPs\Completed Checklists\Data and figure out which class to use from which folder is selected immediately below
+            internalDataList = []
+            dummy = os.path.split(checklistList[0])
+            testString = dummy[0].split('/Data/')
+            print(testString)
+            if (testString[1] == 'Printing'):
+                print("Use Printing class")
+                for checklist in checklistList:
+                    print(checklist)
+                    wb = load_workbook(checklist)
+                    ws = wb.active
+                    p = Printing(checklist)
+                    p.populatePrintingClass(ws)
+                    p.populatePrintingTasks(ws)
+                    if (p.sampleName != None):
+                        if ("ppl" not in p.sampleName.lower()):
+                            internalDataList.append(p)
+            elif (testString[1] == 'Slide coating - fluorinated silane'):
+                print("Use SlideCoating class")
+            else:
+                errorHandler(NOT_YET_SUPPORTED)
+
+            no_tasks = []
+            for internalData in internalDataList:
+                no_tasks.append(len(internalData.tasks))
+
+
+            # prompt user for fields to include in summary      
+            m = outputSelectionDialog(internalDataList[no_tasks.index(max(no_tasks))])
+            m.root.mainloop()
+            m.root.destroy()
+            print('run past dialog, data to save:')
+            for t in m.data.tasks:
+                if (t.output):
+                    print(t.taskLabel)
+
+            # loop through classes and fields and parse to output format
+            # set up file to output to
+            initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
+            outputFile = chooseOutputFile(initialDir, initialFile)
+            #outputFile = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/output.xlsx"
+            wb = Workbook()
+            ws = wb.active
+
+            exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
+        
+            # set up invariant section
+            r = 1
+            ws.cell(row = r, column = 1).value = 'Source checklist'
+            ws.cell(row = r, column = 2).value = 'Print date'
+            ws.cell(row = r, column = 3).value  = 'Sample name'
+            ws.cell(row = r, column = 4).value  = 'Print rig'
+            ws.cell(row = r, column = 5).value  = 'Experimenter'
+            ws.cell(row = r, column = 6).value  = 'QC'
+            ws.cell(row = r, column = 7).value  = 'SOP version'
+
+            for internalData in internalDataList:
+                r = r + 1
+                ws.cell(row = r, column = 1).value = internalData.path
+                ws.cell(row = r, column = 2).value = internalData.printDate
+                ws.cell(row = r, column = 3).value  = internalData.sampleName
+                ws.cell(row = r, column = 4).value  = internalData.printRig
+                ws.cell(row = r, column = 5).value  = internalData.experimenter
+                ws.cell(row = r, column = 6).value  = internalData.qCPerson
+                ws.cell(row = r, column = 7).value  = internalData.sOPVersion
+
+            col = 8
+            for mt in m.data.tasks:
+                if mt.output:
+                    v = vars(mt)
+                    for key in v:
+                        if key not in exclude_vars:
+                            r = 1
+                            col_filled = False
+                            ws.cell(row = r, column = col).value = "%s: %s" % (mt.taskLabel, key)
+                            for internalData in internalDataList:
+                                print(internalData.path)
+                                r = r + 1
+                                for task in internalData.tasks:
+                                    if (task.taskLabel == mt.taskLabel) and (task.taskCategory == mt.taskCategory):
+                                        vv = vars(task)
+                                        if (vv[key] != None) and (vv[key] != ""):
+                                            col_filled = True
+                                        ws.cell(row = r, column = col).value = vv[key]
+                            if col_filled:
+                                col = col + 1
+
+            # write to output file (googledoc?)
+            wb.save(outputFile)
+    except:
+        errorHandler("Unexpected error: %s" % sys.exc_info()[0])
 
 
