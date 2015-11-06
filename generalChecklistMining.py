@@ -431,7 +431,7 @@ def formatToGS(p, gws):
     last_col = numberToLetters(headings.index("Pressure [kPa]") + 1) 
     cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
     cells = gws.range(cellrange)
-    headings = headings[headings.index("Protocol version"):headings.index("Pressure [kPa]")]
+    headings = headings[headings.index("Protocol version"):(headings.index("Pressure [kPa]") + 1)]
 
     for heading in headings:
         if (heading == "Protocol version"):
@@ -479,7 +479,7 @@ def formatToGS(p, gws):
     #    print(cell)
 
     gws.update_cells(cells)
-    webbrowser.open('https://docs.google.com/spreadsheets/d/1UboAesRlMSn1hhiH8oG-5DT-6q3KHFZjj80GKTymsys/edit#gid=0', 2, True)
+    webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
             
 if __name__ == "__main__":
 
@@ -509,8 +509,8 @@ if __name__ == "__main__":
             gc = authenticate_google_docs()
             gsh = gc.open("Sample register")
             gws = gsh.worksheet("Sample register")
-            gsh = gc.open("Dummy sample register")
-            gws = gsh.worksheet("Sheet1")
+            #gsh = gc.open("Dummy sample register")
+            #gws = gsh.worksheet("Sheet1")
 
             # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
             #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
