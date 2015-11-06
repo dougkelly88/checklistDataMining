@@ -4,10 +4,8 @@ from openpyxl.styles import Font
 from Tkinter import *
 from tkMessageBox import *
 import tkSimpleDialog
-import inspect
 import requests, gspread
 from oauth2client.client import SignedJwtAssertionCredentials
-from apiclient import errors
 
 # Constants
 MODE_APPEND = 0
