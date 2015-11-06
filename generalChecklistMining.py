@@ -1,4 +1,4 @@
-import os, time, string, datetime, tkFileDialog, ast, webbrowser, sys
+﻿import os, time, string, datetime, tkFileDialog, ast, webbrowser, sys, traceback
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 from Tkinter import *
@@ -336,7 +336,7 @@ class Printing(ChecklistBase):
 
 def authenticate_google_docs():
     #f = file(os.path.join('C:/Users/d.kelly/Desktop/Python/bulkSummariser-f4e730f107d4.p12'), 'rb')
-    f = file(os.path.join('bulkSummariser-f4e730f107d4.p12'), 'rb')
+    f = file(os.path.join('//base4share/share/Doug/checklistDataMining/bulkSummariser-f4e730f107d4.p12'), 'rb')
     SIGNED_KEY = f.read()
     f.close()
     scope = ['https://spreadsheets.google.com/feeds', 'https://docs.google.com/feeds', 'https://www.googleapis.com/auth/gmail.send']
@@ -414,7 +414,6 @@ def numberToLetters(q):
     return result
                 
 def formatToGS(p, gws):
-    #errorHandler("Unexpected error: sys.exc_info()[0])")
 
     # find row, or make new row
     sampleNamesFromGS = gws.col_values(1)
@@ -425,6 +424,9 @@ def formatToGS(p, gws):
         gws.update_cell(row, 1, p.sampleName)
 
     headings = gws.row_values(1)
+
+    gws.update_cell(row, headings.index("Completed Checklist Link") + 1, p.path)
+
     first_col = numberToLetters(headings.index("Protocol version") + 1)
     last_col = numberToLetters(headings.index("Pressure [kPa]") + 1) 
     cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
@@ -482,7 +484,6 @@ def formatToGS(p, gws):
 if __name__ == "__main__":
 
     try:
-
         #mode = MODE_NEW
         if len(sys.argv) == 1:
             mode = MODE_NEW
@@ -510,7 +511,6 @@ if __name__ == "__main__":
             gws = gsh.worksheet("Sample register")
             gsh = gc.open("Dummy sample register")
             gws = gsh.worksheet("Sheet1")
-        
 
             # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
             #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
@@ -654,6 +654,6 @@ if __name__ == "__main__":
             # write to output file (googledoc?)
             wb.save(outputFile)
     except:
-        errorHandler("Unexpected error: %s" % sys.exc_info()[0])
+        errorHandler(traceback.format_exc())
 
 
