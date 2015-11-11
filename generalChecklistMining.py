@@ -451,14 +451,18 @@ def formatToGS(p, gws):
         if (heading == "Room Temperature"):
             cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room temperature").temperature
         if (heading == "Room Humidity"):
-            cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room humidity").humidity * 100
+            if (p.returnTaskByLabel("Note room humidity").humidity != None):
+                cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room humidity").humidity * 100
         if (heading == "Humidity low"):
-            cells[headings.index(heading) ].value = p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity * 100
+            if (p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity != None):
+                cells[headings.index(heading) ].value = p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity * 100
         if (heading == "Humidity high"):
             try:
-                cells[headings.index(heading) ].value = p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity * 100
+                if (p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity != None):
+                    cells[headings.index(heading) ].value = p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity * 100
             except:
-                cells[headings.index(heading) ].value = p.returnTaskByLabel("Turn humidifier to high").humidity * 100
+                if (p.returnTaskByLabel("Turn humidifier to high").humidity != None):
+                    cells[headings.index(heading) ].value = p.returnTaskByLabel("Turn humidifier to high").humidity * 100
         if (heading == "Print time"):
             cells[headings.index(heading) ].value = p.returnTaskByLabel("Print").timeTaken
         if (heading == "Print voltage (AC) / V x 100"):
