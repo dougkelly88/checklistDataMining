@@ -422,7 +422,14 @@ def formatToGS(p, gws):
         gws.update_cell(row, 1, p.sampleName)
 
     headings = gws.row_values(1)
-
+    splitPath = os.path.split(p.path)
+    filename = os.path.splitext(splitPath(1))
+    print(filename)
+    datePath = format(p.date, "yyyy\mmmm\dd")
+    pdfPath = os.join("\\base4share\share\SOPs\Completed Checklists", datePath, filename)
+    print(pdfPath)
+    raw_input("press to quit...")
+    exit()
     gws.update_cell(row, headings.index("Completed Checklist Link") + 1, p.path)
 
     first_col = numberToLetters(headings.index("Protocol version") + 1)
