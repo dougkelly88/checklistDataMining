@@ -396,7 +396,7 @@ class Printing(ChecklistBase):
                     t.populate(ws, r)
                     self.tasks.append(t)
 
-    def identifyCorrectClass(description):
+    def identifyCorrectClass(self, description):
         description = description.lower()
         if ("humidity" in description) or ("humidifier" in description):
             return Printing.HumidityTask()
