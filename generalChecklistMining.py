@@ -143,6 +143,10 @@ def identifyCorrectClass(description):
             return Printing.BulksTask()
         if (description == "print"):
             return Printing.PrintTask()
+        if ("oil" in description):
+            return Printing.OilTask()
+        if ("box" in description):
+            return Printing.BoxTask()
         else:
             return TaskBase()
 
@@ -185,6 +189,35 @@ class Printing(ChecklistBase):
                         self.freq = ws.cell(row = r+1, column = col+1).value
                     if ("pressure" in c.lower()):
                         self.pressure = ws.cell(row = r+1, column = col+1).value
+
+    class OilTask(TaskBase):
+        def __intit__(self):
+            self.aliquote = ""
+            self.id = ""
+
+        def populate(self, ws, r):
+            TaskBase.populate(self, ws, r)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("ID" in c):
+                        self.id = ws.cell(row = r, column = col+1).value
+                    if ("Aliquote" in c):
+                        self.aliquote = ws.cell(row = r, column = col+1).value
+
+    class BoxTask(TaskBase):
+        def __init__(self):
+            self.bottom = ""
+
+        def populate(self, ws, r):
+            TaskBase.populate(self, ws, r)
+
+            for col in range(26): 
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("Bottom" in c):
+                        self.bottom = ws.cell(row = r, column = col+1).value
 
     class BulksTask(TaskBase):
         def __init__(self):
@@ -259,8 +292,6 @@ class Printing(ChecklistBase):
             TaskBase.populate(self, ws, r)
             self.humidity = ws.cell(row = r, column = 12).value
             self.notes = ws.cell(row = r, column = 14).value
-            #print("Humidity task")
-            #print(vars(self))
 
     class TemperatureTask(TaskBase):
         def __init__(self):
@@ -492,10 +523,11 @@ if __name__ == "__main__":
 
     try:
         #mode = MODE_NEW
+        print(len(sys.argv))
         if len(sys.argv) == 1:
             mode = MODE_NEW
             print('Mode = generate new Excel spreadsheet summary')
-        if len(sys.argv) == 2 :
+        elif len(sys.argv) == 2 :
             mode = MODE_UPDATEWEBFROMCL
             checklistPath = sys.argv[1]
             print('Mode = update google sheet')
@@ -508,6 +540,7 @@ if __name__ == "__main__":
             errorHandler('Too many arguments passed!')
 
         mode = MODE_UPDATEWEBFROMCL
+        mode = MODE_NEW
 
         xml_export = False;
 
@@ -592,7 +625,9 @@ if __name__ == "__main__":
                 print("Use SlideCoating class")
             else:
                 errorHandler(NOT_YET_SUPPORTED)
-
+            
+            # TODO: better to establish correct number of tasks by adding tasks to a dictionary so that
+            # there is a list of unique tasks. 
             no_tasks = []
             for internalData in internalDataList:
                 no_tasks.append(len(internalData.tasks))
@@ -646,8 +681,8 @@ if __name__ == "__main__":
                             r = 1
                             col_filled = False
                             ws.cell(row = r, column = col).value = "%s: %s" % (mt.taskLabel, key)
+                            print(mt.taskLabel)
                             for internalData in internalDataList:
-                                print(internalData.path)
                                 r = r + 1
                                 for task in internalData.tasks:
                                     if (task.taskLabel == mt.taskLabel) and (task.taskCategory == mt.taskCategory):
