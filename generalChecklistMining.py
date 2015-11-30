@@ -172,23 +172,28 @@ class Printing(ChecklistBase):
             self.voltage = ""
             self.freq = ""
             self.pressure = ""
+            self.dcOffset = ""
 
         def populate(self, ws, r):
             TaskBase.populate(self, ws, r)
 
-            for col in range(26):
-                c = ws.cell(row = r+1, column = col).value
-                if (isinstance(c, basestring)):
-                    if ("dwell" in c.lower()):
-                        self.dwell = ws.cell(row = r+1, column = col+1).value
-                    if ("step" in c.lower()):
-                        self.step = ws.cell(row = r+1, column = col+1).value
-                    if ("voltage" in c.lower()):
-                        self.voltage = ws.cell(row = r+1, column = col+1).value
-                    if ("freq" in c.lower()):
-                        self.freq = ws.cell(row = r+1, column = col+1).value
-                    if ("pressure" in c.lower()):
-                        self.pressure = ws.cell(row = r+1, column = col+1).value
+            for rowind in range(2):
+                for col in range(26):
+                    c = ws.cell(row = r+rowind, column = col).value
+                    if (isinstance(c, basestring)):
+                        if ("dwell" in c.lower()):
+                            self.dwell = ws.cell(row = r+rowind, column = col+1).value
+                        if ("step" in c.lower()):
+                            self.step = ws.cell(row = r+rowind, column = col+1).value
+                        if ("voltage" in c.lower()):
+                            self.voltage = ws.cell(row = r+rowind, column = col+1).value
+                            print("voltage = %d V" % self.voltage)
+                        if ("freq" in c.lower()):
+                            self.freq = ws.cell(row = r+rowind, column = col+1).value
+                        if ("pressure" in c.lower()):
+                            self.pressure = ws.cell(row = r+rowind, column = col+1).value
+                        if ("offset" in c.lower()):
+                            self.dcOffset = ws.cell(row = r+rowind, column = col+1).value
 
     class OilTask(TaskBase):
         def __intit__(self):
