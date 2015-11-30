@@ -139,8 +139,8 @@ def identifyCorrectClass(description):
             return Printing.SlideTask()
         if (description == "tip") or ("tip size" in description):
             return Printing.TipTask()
-        if (description == "mix") or ("push-through" in description):
-            return Printing.BulksTask()
+        #if (description == "mix") or ("push-through" in description):
+        #    return Printing.BulksTask()
         if (description == "print"):
             return Printing.PrintTask()
         if (description == "oil"):
@@ -149,6 +149,10 @@ def identifyCorrectClass(description):
             return Printing.BoxTask()
         if ("oven" in description):
             return Printing.OvenTask()
+        if (description == "filling tip"):
+            return Printing.FillingTipTask()
+        if (description == "mix"):
+            return Printing.MixTask()
         else:
             return TaskBase()
 
@@ -196,6 +200,33 @@ class Printing(ChecklistBase):
                         if ("offset" in c.lower()):
                             self.dcOffset = ws.cell(row = r+rowind, column = col+1).value
 
+    class FillingTipTask(TaskBase):
+        def __init__(self):
+            self.mixVolume = ""
+
+        def populate(self, ws, r):
+            TaskBase.populate(self, ws, r)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("mix volume" in c.lower()):
+                        self.mixVolume = ws.cell(row = r, column = col+1).value
+                        print("fill volume = %s" % self.mixVolume)
+
+    class MixTask(TaskBase):
+        def __init__(self):
+            self.id = ""
+
+        def populate(self, ws, r):
+            TaskBase.populate(self, ws, r)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("id" in c.lower()):
+                        self.id = ws.cell(row = r, column = col+1).value
+                    
     class OvenTask(TaskBase):
         def __init__(self):
             self.type = ""
@@ -207,7 +238,6 @@ class Printing(ChecklistBase):
             for col in range(26):
                 c = ws.cell(row = r, column = col).value
                 if (isinstance(c, basestring)):
-                    print(c)
                     if ("oven type" in c.lower()):
                         self.type = ws.cell(row = r, column = col+1).value
                     if ("temp" in c.lower()):
