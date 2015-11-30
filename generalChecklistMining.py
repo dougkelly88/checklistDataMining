@@ -143,7 +143,7 @@ def identifyCorrectClass(description):
             return Printing.BulksTask()
         if (description == "print"):
             return Printing.PrintTask()
-        if ("oil" in description):
+        if (description == "oil"):
             return Printing.OilTask()
         if ("box" in description):
             return Printing.BoxTask()
@@ -287,11 +287,18 @@ class Printing(ChecklistBase):
     class HumidityTask(TaskBase):
         def __init__(self):
             self.humidity = ""
+            self.oilVolume = ""
 
         def populate(self, ws, r):
             TaskBase.populate(self, ws, r)
-            self.humidity = ws.cell(row = r, column = 12).value
-            self.notes = ws.cell(row = r, column = 14).value
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("Volume" in c):
+                        self.oilVolume = ws.cell(row = r, column = col+1).value
+                    if ("Humidity" in c):
+                        self.humidity = ws.cell(row = r, column = col+1).value
 
     class TemperatureTask(TaskBase):
         def __init__(self):
