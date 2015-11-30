@@ -101,6 +101,7 @@ class ChecklistBase(object):
         self.qCPerson = ""
         self.tasks = []
         self.path = ""
+        self.output = False
 
     def returnTaskByLabel(self, label):
         for task in self.tasks:
@@ -165,7 +166,6 @@ class Printing(ChecklistBase):
         # Initialise specialised print checklist variables
         self.sampleName = ""
         self.experimenter = ""
-        self.output = False
         
         # Initialise specialised print checklist variables that are not explicitly in checklist but may be derived from checklist entries
         self.printDate = ""
@@ -422,6 +422,28 @@ class Printing(ChecklistBase):
                     t.taskNumber  = taskNumber
                     t.populate(ws, r)
                     self.tasks.append(t)
+
+class PrintingPrep(ChecklistBase):
+    """Class containing all variables and methods relating to the printing prep checklist"""
+    def __init__(self, path):
+        # Initialise general checklist class
+        super(PrintingPrep, self).__init__()
+        self.path = path
+
+        
+    class stockABILParaffinTask(TaskBase):
+        def __init__(self):
+            self.surfactantConcn = ""
+
+        def populate(self, ws, r):
+            TaskBase.populate(self, ws, r)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("stock abil" in c.lower()):
+                        self.surfactantConcn = ws.cell(row = r, column = col+1).value
+
 
 def authenticate_google_docs():
     #f = file(os.path.join('C:/Users/d.kelly/Desktop/Python/bulkSummariser-f4e730f107d4.p12'), 'rb')
