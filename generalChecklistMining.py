@@ -105,7 +105,7 @@ class ChecklistBase(object):
 
     def returnTaskByLabel(self, label):
         for task in self.tasks:
-            if (task.taskLabel == label):
+            if (task.taskLabel.lower() == label.lower()):
                 return task
 
     def populateTasks(c, ws):
@@ -233,7 +233,12 @@ class Printing(ChecklistBase):
                     if ("oven type" in c.lower()):
                         self.type = ws.cell(row = r, column = col+1).value
                     if ("temp" in c.lower()):
-                        self.temperature = ws.cell(row = r, column = col+1).value
+                        s = ws.cell(row = r, column = col+1).value
+                        if (isinstance(s, basestring)):
+                            f = s.split("C", 1)
+                        else:
+                            f = s
+                        self.temperature = f
 
     class OilTask(TaskBase):
         def __intit__(self):
@@ -547,12 +552,13 @@ def formatToGS(p, gws):
     gws.update_cell(row, headings.index("Completed Checklist Link") + 1, pdfPath)
 
     first_col = numberToLetters(headings.index("Protocol version") + 1)
-    last_col = numberToLetters(headings.index("Pressure [kPa]") + 1) 
+    last_col = numberToLetters(headings.index("Door") + 1) 
     cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
     cells = gws.range(cellrange)
-    headings = headings[headings.index("Protocol version"):(headings.index("Pressure [kPa]") + 1)]
+    headings = headings[headings.index("Protocol version"):(headings.index("Door") + 1)]
 
     for heading in headings:
+        # should each of these be surrounded by its own try-catch for robustness?!
         if (heading == "Protocol version"):
             cells[headings.index(heading) ].value = 'v %1.2f' % p.sOPVersion
         if (heading == "Rig"):
@@ -575,8 +581,8 @@ def formatToGS(p, gws):
             if (p.returnTaskByLabel("Note room humidity").humidity != None):
                 cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room humidity").humidity * 100
         if (heading == "Humidity low"):
-            if (p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity != None):
-                cells[headings.index(heading) ].value = p.returnTaskByLabel("Position Oil and turn humidifier to low").humidity * 100
+            if (p.returnTaskByLabel("Position Oil + Turn humidifier to low").humidity != None):
+                cells[headings.index(heading) ].value = p.returnTaskByLabel("Position Oil + Turn humidifier to low").humidity * 100
         if (heading == "Humidity high"):
             try:
                 if (p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity != None):
@@ -596,6 +602,17 @@ def formatToGS(p, gws):
             cells[headings.index(heading) ].value = p.returnTaskByLabel("Print").step
         if (heading == "Pressure [kPa]"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Print").pressure
+        if (heading == "Rig Box open/closed"):
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Box").bottom
+        if (heading == "Tip fill/ul"):
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Filling tip").mixVolume
+        if (heading == "oil volume/ul"):
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Position Oil + Turn humidifier to low").oilVolume
+        if (heading == "Print voltage (DC) / V x 100"):
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Print").dcOffset
+        if (heading == "incubation"):
+            str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, p.returnTaskByLabel("Transfer to oven").temperature)
+            cells[headings.index(heading)].value = str
 
     #print(p.printDate)
     #for cell in cells:
@@ -625,17 +642,17 @@ if __name__ == "__main__":
             errorHandler('Too many arguments passed!')
 
         mode = MODE_UPDATEWEBFROMCL
-        mode = MODE_NEW
+        #mode = MODE_NEW
 
         xml_export = False;
 
         if (mode == MODE_UPDATEWEBFROMCL):
         
             gc = authenticate_google_docs()
-            gsh = gc.open("Sample register")
-            gws = gsh.worksheet("Sample register")
-            #gsh = gc.open("Dummy sample register")
-            #gws = gsh.worksheet("Sheet1")
+            #gsh = gc.open("Sample register")
+            #gws = gsh.worksheet("Sample register")
+            gsh = gc.open("Dummy sample register")
+            gws = gsh.worksheet("Sheet1")
 
             # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
             #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
