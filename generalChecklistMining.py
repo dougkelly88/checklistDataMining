@@ -130,33 +130,6 @@ class TaskBase(object):
         if (taskLabel == label):
             return self
 
-def identifyCorrectClass(description):
-        description = description.lower()
-        if ("humidity" in description) or ("humidifier" in description):
-            return Printing.HumidityTask()
-        if ("temperature" in description):
-            return Printing.TemperatureTask()
-        if (description == "slide"):
-            return Printing.SlideTask()
-        if (description == "tip") or ("tip size" in description):
-            return Printing.TipTask()
-        #if (description == "mix") or ("push-through" in description):
-        #    return Printing.BulksTask()
-        if (description == "print"):
-            return Printing.PrintTask()
-        if (description == "oil"):
-            return Printing.OilTask()
-        if ("box" in description):
-            return Printing.BoxTask()
-        if ("oven" in description):
-            return Printing.OvenTask()
-        if (description == "filling tip"):
-            return Printing.FillingTipTask()
-        if (description == "mix"):
-            return Printing.MixTask()
-        else:
-            return TaskBase()
-
 class Printing(ChecklistBase):
     """Class containing all variables and methods relating to the printing checklist"""
     def __init__(self, path):
@@ -416,12 +389,39 @@ class Printing(ChecklistBase):
                     if (ws.cell(row = r, column = 3).value != None):
                         category = ws.cell(row = r, column = 3).value
                     taskLabel = ws.cell(row = r, column = 4).value
-                    t = identifyCorrectClass(taskLabel)
+                    t = self.identifyCorrectClass(taskLabel)
                     t.taskLabel = taskLabel
                     t.taskCategory = category
                     t.taskNumber  = taskNumber
                     t.populate(ws, r)
                     self.tasks.append(t)
+
+    def identifyCorrectClass(description):
+        description = description.lower()
+        if ("humidity" in description) or ("humidifier" in description):
+            return Printing.HumidityTask()
+        if ("temperature" in description):
+            return Printing.TemperatureTask()
+        if (description == "slide"):
+            return Printing.SlideTask()
+        if (description == "tip") or ("tip size" in description):
+            return Printing.TipTask()
+        #if (description == "mix") or ("push-through" in description):
+        #    return Printing.BulksTask()
+        if (description == "print"):
+            return Printing.PrintTask()
+        if (description == "oil"):
+            return Printing.OilTask()
+        if ("box" in description):
+            return Printing.BoxTask()
+        if ("oven" in description):
+            return Printing.OvenTask()
+        if (description == "filling tip"):
+            return Printing.FillingTipTask()
+        if (description == "mix"):
+            return Printing.MixTask()
+        else:
+            return TaskBase()
 
 class PrintingPrep(ChecklistBase):
     """Class containing all variables and methods relating to the printing prep checklist"""
