@@ -147,6 +147,8 @@ def identifyCorrectClass(description):
             return Printing.OilTask()
         if ("box" in description):
             return Printing.BoxTask()
+        if ("oven" in description):
+            return Printing.OvenTask()
         else:
             return TaskBase()
 
@@ -187,13 +189,29 @@ class Printing(ChecklistBase):
                             self.step = ws.cell(row = r+rowind, column = col+1).value
                         if ("voltage" in c.lower()):
                             self.voltage = ws.cell(row = r+rowind, column = col+1).value
-                            print("voltage = %d V" % self.voltage)
                         if ("freq" in c.lower()):
                             self.freq = ws.cell(row = r+rowind, column = col+1).value
                         if ("pressure" in c.lower()):
                             self.pressure = ws.cell(row = r+rowind, column = col+1).value
                         if ("offset" in c.lower()):
                             self.dcOffset = ws.cell(row = r+rowind, column = col+1).value
+
+    class OvenTask(TaskBase):
+        def __init__(self):
+            self.type = ""
+            self.temperature = ""
+
+        def populate(self, ws, r):
+            TaskBase.populate(self, ws, r)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    print(c)
+                    if ("oven type" in c.lower()):
+                        self.type = ws.cell(row = r, column = col+1).value
+                    if ("temp" in c.lower()):
+                        self.temperature = ws.cell(row = r, column = col+1).value
 
     class OilTask(TaskBase):
         def __intit__(self):
