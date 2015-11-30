@@ -108,6 +108,25 @@ class ChecklistBase(object):
             if (task.taskLabel == label):
                 return task
 
+    def populateTasks(c, ws):
+        print('Populating...')
+        print(c)
+        category = ""
+        for row in ws.iter_rows('B1:B100'):
+            for cell in row:
+                if (isinstance(cell.value, long)):
+                    r = row[0].row
+                    taskNumber = cell.value
+                    if (ws.cell(row = r, column = 3).value != None):
+                        category = ws.cell(row = r, column = 3).value
+                    taskLabel = ws.cell(row = r, column = 4).value
+                    t = c.identifyCorrectClass(taskLabel)
+                    t.taskLabel = taskLabel
+                    t.taskCategory = category
+                    t.taskNumber  = taskNumber
+                    t.populate(ws, r)
+                    c.tasks.append(t)
+
 class TaskBase(object):
     """ Base class for task-level common properties"""
     def __init__(self):
@@ -378,23 +397,7 @@ class Printing(ChecklistBase):
             output[1] = "%s%s%s" % (y, m, d)
         return output
 
-    def populatePrintingTasks(self, ws):
-        print('Populating...')
-        category = ""
-        for row in ws.iter_rows('B1:B100'):
-            for cell in row:
-                if (isinstance(cell.value, long)):
-                    r = row[0].row
-                    taskNumber = cell.value
-                    if (ws.cell(row = r, column = 3).value != None):
-                        category = ws.cell(row = r, column = 3).value
-                    taskLabel = ws.cell(row = r, column = 4).value
-                    t = self.identifyCorrectClass(taskLabel)
-                    t.taskLabel = taskLabel
-                    t.taskCategory = category
-                    t.taskNumber  = taskNumber
-                    t.populate(ws, r)
-                    self.tasks.append(t)
+    
 
     def identifyCorrectClass(self, description):
         description = description.lower()
@@ -643,7 +646,7 @@ if __name__ == "__main__":
             ws = wb.active
             p = Printing(checklistPath)
             p.populatePrintingClass(ws)
-            p.populatePrintingTasks(ws)
+            p.populateTasks(ws)
             formatToGS(p, gws)
 
         if (mode == MODE_APPEND):
@@ -698,8 +701,10 @@ if __name__ == "__main__":
                     wb = load_workbook(checklist)
                     ws = wb.active
                     p = Printing(checklist)
+                    print("Class type =")
+                    print(p)
                     p.populatePrintingClass(ws)
-                    p.populatePrintingTasks(ws)
+                    p.populateTasks(ws)
                     if (p.sampleName != None):
                         if ("ppl" not in p.sampleName.lower()):
                             internalDataList.append(p)
