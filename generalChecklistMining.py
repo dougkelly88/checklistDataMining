@@ -558,7 +558,25 @@ class PrintingPrep(ChecklistBase):
                     if ("duration" in c.lower()):
                         self.duration = ws.cell(row = r, column = col+1).value
 
-    
+    class aliquoteTask(TaskBase):
+        def __init__(self, outer):
+            self.oilID = ""
+            self.batch = ""
+            self.outerInstance = outer
+
+        def populate(self, ws, r):
+            #TaskBase.populate(self, ws, r)
+
+            self.batch = returnBatchNumber(self.taskLabel)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("id" in c.lower()):
+                        self.oilID = ws.cell(row = r, column = col+1).value
+
+            if (self.batch == 1):
+                self.outerInstance.date = self.oilID[0:6]
 
     def identifyCorrectClass(self, description):
         #print('IDing class...')
@@ -573,6 +591,10 @@ class PrintingPrep(ChecklistBase):
             return PrintingPrep.settleOilTask()
         if ("Mix with 5% ABIL" in description):
             return PrintingPrep.addABILToHydratedOilTask()
+        if ("rotate" in description.lower()):
+            return PrintingPrep.rotateTask()
+        if ("aliquote" in description.lower()):
+            return PrintingPrep.aliquoteTask(self);
         else:
             return TaskBase()
 
@@ -897,7 +919,7 @@ if __name__ == "__main__":
             wb = Workbook()
             ws = wb.active
 
-            exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output']
+            exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output', 'outerInstance']
         
             # set up invariant section
             r = 1
