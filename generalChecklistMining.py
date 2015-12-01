@@ -144,7 +144,7 @@ class ChecklistBase(object):
                     t.taskCategory = category
                     t.taskNumber  = taskNumber
                     t.populate(ws, r)
-                    print(vars(t))
+                    #print(vars(t))
                     c.tasks.append(t)
 
 class TaskBase(object):
@@ -491,7 +491,8 @@ class PrintingPrep(ChecklistBase):
                         self.date = ws.cell(row = r, column = col+1).value
                     if ("time" in c.lower()):
                         self.time = ws.cell(row = r, column = col+1).value
-
+    
+    # Condense hydrate, settle and rotate, all of which have same vars, into a single class?
     class hydrateOilTask(TaskBase):
         def __init__(self):
             self.duration = ""
@@ -500,9 +501,7 @@ class PrintingPrep(ChecklistBase):
         def populate(self, ws, r):
             #TaskBase.populate(self, ws, r)
 
-            strs = re.split('\\(|\\)', self.taskLabel)
-            self.batch = strs[1];
-            print("batch = %s", self.batch)
+            self.batch = returnBatchNumber(self.taskLabel)
 
             for col in range(26):
                 c = ws.cell(row = r, column = col).value
@@ -518,9 +517,7 @@ class PrintingPrep(ChecklistBase):
          def populate(self, ws, r):
             #TaskBase.populate(self, ws, r)
 
-            strs = re.split('\\(', self.taskLabel)
-            self.batch = strs[1];
-            print("batch = %s", self.batch)
+            self.batch = returnBatchNumber(self.taskLabel)
 
             for col in range(26):
                 c = ws.cell(row = r, column = col).value
@@ -531,9 +528,13 @@ class PrintingPrep(ChecklistBase):
     class addABILToHydratedOilTask(TaskBase):
         def __init__(self):
             self.surfactantConcn = ""
+            self.batch = ""
 
         def populate(self, ws, r):
             #TaskBase.populate(self, ws, r)
+            
+            self.batch = returnBatchNumber(self.taskLabel)
+
             for col in range(26):
                 c = ws.cell(row = r, column = col).value
                 if (isinstance(c, basestring)):
@@ -541,12 +542,28 @@ class PrintingPrep(ChecklistBase):
                         self.surfactantConcn = ws.cell(row = r, column = col+3).value
                         print(self.surfactantConcn)
 
+    class rotateTask(TaskBase):
+         def __init__(self):
+            self.duration = ""
+            self.batch = ""
+
+         def populate(self, ws, r):
+            #TaskBase.populate(self, ws, r)
+
+            self.batch = returnBatchNumber(self.taskLabel)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("duration" in c.lower()):
+                        self.duration = ws.cell(row = r, column = col+1).value
+
+    
+
     def identifyCorrectClass(self, description):
-        print('IDing class...')
-        print(description)
-        #print(vars(self))
+        #print('IDing class...')
+        #print(description)
         if (description == "Stock ABIL in Paraffin prep"):
-            print('Found stock ABIL task')
             return PrintingPrep.stockABILParaffinTask()
         if (description == "Prep Oil/water mix"):
             return PrintingPrep.oilWaterMixTask()
@@ -726,6 +743,14 @@ def formatToGS(p, gws):
 
     gws.update_cells(cells)
     webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
+
+def returnBatchNumber(taskLabel):
+    # would be preferable to make this a method of the PrintingPrep class, but that's problematic to call from within class?!
+    strs = re.split('\\(|\\)', taskLabel)
+    batchstr = strs[1];
+    m = re.match('batch (?P<_0>\d+)', batchstr.lower())
+    intValue = int(m.group(1))
+    return intValue;
             
 if __name__ == "__main__":
 
