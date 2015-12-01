@@ -456,6 +456,9 @@ class PrintingPrep(ChecklistBase):
         super(PrintingPrep, self).__init__()
         self.path = path
 
+        # Initialise specialised printing prep vars
+        self.oilIDs = []
+
     def populatePrintingPrepClass(self, ws):
         """Populate checklist-level data for the Printing case"""
         self.sOP = ws['D2'].value
@@ -574,6 +577,7 @@ class PrintingPrep(ChecklistBase):
                 if (isinstance(c, basestring)):
                     if ("id" in c.lower()):
                         self.oilID = ws.cell(row = r, column = col+1).value
+                        self.outerInstance.oilIDs.append(self.oilID)
 
             if (self.batch == 1):
                 self.outerInstance.date = self.oilID[0:6]
@@ -761,12 +765,39 @@ def formatToGS(p, gws):
             str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, p.returnTaskByLabel("Transfer to oven").temperature)
             cells[headings.index(heading)].value = str
 
-    #print(p.printDate)
-    #for cell in cells:
-    #    print(cell)
-
     gws.update_cells(cells)
     webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
+
+def crossRefPrepToGS(p, gws):
+
+    headings = gws.row_values(1)
+    oilIDsFromGS = gws.col_values(headings.index("oil/surfactant batch ID") + 1)
+    oilIDsFromGS = oilIDsFromGS[1:]
+    print(oilIDsFromGS)
+    sampleNamesFromGS = gws.col_values(headings.index("Sample name") + 1)
+    sampleNamesFromGS = sampleNamesFromGS[1:]
+    print(sampleNamesFromGS)
+
+    print('oil IDs in prep spreadsheet')
+    print(p.oilIDs)
+
+    for oilIDFromGS in oilIDsFromGS:
+        if (oilIDFromGS in p.oilIDs) & (oilIDFromGS is not None):
+            print(oilIDFromGS)
+            # identify batch corresponding to this ID
+            # get final surfactant concn, hydration time directly from p
+            # work out (approx.?) rest time based on start print time, oil prep durations, and oil/water mix date and time
+            surfConc = ""
+            hydrationTime = ""
+            print(oilIDsFromGS.index(oilIDFromGS))
+            correspondingSampleName = sampleNamesFromGS[oilIDsFromGS.index(oilIDFromGS)]
+            print(correspondingSampleName)
+            batch = p.oilIDs.index(oilIDFromGS) + 1
+            print(batch)
+            showerror("Pause", "Pause")
+
+
+
 
 def returnBatchNumber(taskLabel):
     # would be preferable to make this a method of the PrintingPrep class, but that's problematic to call from within class?!
@@ -833,9 +864,8 @@ if __name__ == "__main__":
                 p = PrintingPrep(checklistPath)
                 p.populatePrintingPrepClass(ws)
                 p.populateTasks(ws)
-                showerror("nonsense", testString[1])
                 # cross reference with Printing sheet here!
-                #crossRefPrepToGS(p, gws)
+                crossRefPrepToGS(p, gws)
 
             
 
