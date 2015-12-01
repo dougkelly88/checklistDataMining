@@ -867,8 +867,10 @@ if __name__ == "__main__":
                 p = Printing(checklistPath)
                 p.populatePrintingClass(ws)
                 p.populateTasks(ws)
-                
-                formatToGS(p, gws)
+                if (isinstance(p, Printing)):
+                    if (p.sampleName != None):
+                        if ("ppl" not in p.sampleName.lower()):
+                            formatToGS(p, gws)
             else:
                 p = PrintingPrep(checklistPath)
                 p.populatePrintingPrepClass(ws)
