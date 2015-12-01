@@ -885,8 +885,6 @@ if __name__ == "__main__":
                 else:
                     errorHandler(NOT_YET_SUPPORTED)
                 
-                print("Class type =")
-                print(p)
                 p.populateTasks(ws)
                 if (isinstance(p, Printing)):
                     if (p.sampleName != None):
@@ -913,7 +911,12 @@ if __name__ == "__main__":
 
             # loop through classes and fields and parse to output format
             # set up file to output to
-            initialFile = "%s printing data summary.xlsx" % time.strftime('%Y-%m-%d')
+            if isinstance(m.data, PrintingPrep):
+                descString = "printing prep"
+            else:
+                descString = "printing"
+
+            initialFile = "%s %s data summary.xlsx" % (time.strftime('%Y-%m-%d'), descString)
             outputFile = chooseOutputFile(initialDir, initialFile)
             #outputFile = "C:/Users/d.kelly/Desktop/Python/DKBase4PythonScripts/checklistDataMining/sampleData/test/output.xlsx"
             wb = Workbook()
