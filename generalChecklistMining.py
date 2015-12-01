@@ -1,4 +1,4 @@
-﻿import os, time, string, datetime, tkFileDialog, ast, webbrowser, sys, traceback
+﻿import os, time, string, datetime, tkFileDialog, ast, webbrowser, sys, traceback, re
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 from Tkinter import *
@@ -46,14 +46,24 @@ class outputSelectionDialog(object):
         chkAll = Checkbutton(frm_2, text = 'All', variable = self.all)
         chkAll.pack(padx = 0, pady = 5, anchor = W)
         chkAll['command'] = self.c2_action
-        for t in self.data.tasks:
-            txt = "%s: %s" % (t.taskCategory, t.taskLabel)
-            var = IntVar()
-            chk = Checkbutton(frm_2, text = txt, variable = var)
-            i = i+1
-            chk.pack(padx = 0, pady = 5, anchor = W)
-            chk['command'] = self.c1_action
-            self.vars.append(var)
+        if isinstance(self.data, Printing):
+            for t in self.data.tasks:
+                txt = "%s: %s" % (t.taskCategory, t.taskLabel)
+                var = IntVar()
+                chk = Checkbutton(frm_2, text = txt, variable = var)
+                i = i+1
+                chk.pack(padx = 0, pady = 5, anchor = W)
+                chk['command'] = self.c1_action
+                self.vars.append(var)
+        else:
+            for t in self.data.tasks:
+                txt = "%s" % (t.taskLabel)
+                var = IntVar()
+                chk = Checkbutton(frm_2, text = txt, variable = var)
+                i = i+1
+                chk.pack(padx = 0, pady = 5, anchor = W)
+                chk['command'] = self.c1_action
+                self.vars.append(var)
         btn_1 = Button(frm_2, width=8, text='OK')
         btn_1['command'] = self.b1_action
         btn_1.pack(anchor = CENTER)
@@ -110,21 +120,31 @@ class ChecklistBase(object):
 
     def populateTasks(c, ws):
         print('Populating...')
-        print(c)
         category = ""
         for row in ws.iter_rows('B1:B100'):
+            taskLabel = None
             for cell in row:
-                if (isinstance(cell.value, long)):
-                    r = row[0].row
-                    taskNumber = cell.value
-                    if (ws.cell(row = r, column = 3).value != None):
-                        category = ws.cell(row = r, column = 3).value
-                    taskLabel = ws.cell(row = r, column = 4).value
+                if isinstance(c, Printing):
+                    if (isinstance(cell.value, long)):
+                        r = row[0].row
+                        taskNumber = cell.value    
+                        if (ws.cell(row = r, column = 3).value != None):
+                            category = ws.cell(row = r, column = 3).value
+                            taskLabel = ws.cell(row = r, column = 4).value
+                else:
+                    if (isinstance(cell.value, long)) | (isinstance(cell.value, float)):
+                        r = row[0].row
+                        taskNumber = cell.value
+                        print(taskNumber)
+                        if (ws.cell(row = r, column = 3).value != None):
+                            taskLabel = ws.cell(row = r, column = 3).value
+                if (taskLabel != None):
                     t = c.identifyCorrectClass(taskLabel)
                     t.taskLabel = taskLabel
                     t.taskCategory = category
                     t.taskNumber  = taskNumber
                     t.populate(ws, r)
+                    print(vars(t))
                     c.tasks.append(t)
 
 class TaskBase(object):
@@ -402,8 +422,6 @@ class Printing(ChecklistBase):
             output[1] = "%s%s%s" % (y, m, d)
         return output
 
-    
-
     def identifyCorrectClass(self, description):
         description = description.lower()
         if ("humidity" in description) or ("humidifier" in description):
@@ -438,20 +456,108 @@ class PrintingPrep(ChecklistBase):
         super(PrintingPrep, self).__init__()
         self.path = path
 
+    def populatePrintingPrepClass(self, ws):
+        """Populate checklist-level data for the Printing case"""
+        self.sOP = ws['D2'].value
+        self.sOPVersion = ws['D4'].value
+        self.date = ws['D6'].value
+        self.qCPerson = ws['D8'].value
         
     class stockABILParaffinTask(TaskBase):
         def __init__(self):
             self.surfactantConcn = ""
 
         def populate(self, ws, r):
-            TaskBase.populate(self, ws, r)
+            #TaskBase.populate(self, ws, r)
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("surfactant" in c.lower()):
+                        self.surfactantConcn = ws.cell(row = r, column = col+3).value
+                        print(self.surfactantConcn)
+
+    class oilWaterMixTask(TaskBase):
+        def __init__(self):
+            self.date = ""
+            self.time = ""
+
+        def populate(self, ws, r):
+            #TaskBase.populate(self, ws, r)
 
             for col in range(26):
                 c = ws.cell(row = r, column = col).value
                 if (isinstance(c, basestring)):
-                    if ("stock abil" in c.lower()):
-                        self.surfactantConcn = ws.cell(row = r, column = col+1).value
+                    if ("date" in c.lower()):
+                        self.date = ws.cell(row = r, column = col+1).value
+                    if ("time" in c.lower()):
+                        self.time = ws.cell(row = r, column = col+1).value
 
+    class hydrateOilTask(TaskBase):
+        def __init__(self):
+            self.duration = ""
+            self.batch = ""
+
+        def populate(self, ws, r):
+            #TaskBase.populate(self, ws, r)
+
+            strs = re.split('\\(|\\)', self.taskLabel)
+            self.batch = strs[1];
+            print("batch = %s", self.batch)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("duration" in c.lower()):
+                        self.duration = ws.cell(row = r, column = col+1).value
+     
+    class settleOilTask(TaskBase):
+         def __init__(self):
+            self.duration = ""
+            self.batch = ""
+
+         def populate(self, ws, r):
+            #TaskBase.populate(self, ws, r)
+
+            strs = re.split('\\(', self.taskLabel)
+            self.batch = strs[1];
+            print("batch = %s", self.batch)
+
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("duration" in c.lower()):
+                        self.duration = ws.cell(row = r, column = col+1).value
+                                       
+    class addABILToHydratedOilTask(TaskBase):
+        def __init__(self):
+            self.surfactantConcn = ""
+
+        def populate(self, ws, r):
+            #TaskBase.populate(self, ws, r)
+            for col in range(26):
+                c = ws.cell(row = r, column = col).value
+                if (isinstance(c, basestring)):
+                    if ("surfactant" in c.lower()):
+                        self.surfactantConcn = ws.cell(row = r, column = col+3).value
+                        print(self.surfactantConcn)
+
+    def identifyCorrectClass(self, description):
+        print('IDing class...')
+        print(description)
+        #print(vars(self))
+        if (description == "Stock ABIL in Paraffin prep"):
+            print('Found stock ABIL task')
+            return PrintingPrep.stockABILParaffinTask()
+        if (description == "Prep Oil/water mix"):
+            return PrintingPrep.oilWaterMixTask()
+        if ("hydrate" in description.lower()):
+            return PrintingPrep.hydrateOilTask()
+        if ("Settling time" in description):
+            return PrintingPrep.settleOilTask()
+        if ("Mix with 5% ABIL" in description):
+            return PrintingPrep.addABILToHydratedOilTask()
+        else:
+            return TaskBase()
 
 def authenticate_google_docs():
     #f = file(os.path.join('C:/Users/d.kelly/Desktop/Python/bulkSummariser-f4e730f107d4.p12'), 'rb')
@@ -641,8 +747,8 @@ if __name__ == "__main__":
         else:
             errorHandler('Too many arguments passed!')
 
-        mode = MODE_UPDATEWEBFROMCL
-        #mode = MODE_NEW
+        #mode = MODE_UPDATEWEBFROMCL
+        mode = MODE_NEW
 
         xml_export = False;
 
@@ -692,8 +798,9 @@ if __name__ == "__main__":
         
             # prompt user for place to look for checklists
             prompt = "Please choose a location in which to look for checklist spreadsheets..."
-            inputPath = chooseFolder(initialDir, prompt)
+            #inputPath = chooseFolder(initialDir, prompt)
             #inputPath = "//base4share/share/SOPs/Completed Checklists/Data/Printing"
+            inputPath = "C:/Users/d.kelly/Desktop/test/Data/General Printing Prep"
 
             # generate list of checklist paths
             checklistList = []
@@ -711,25 +818,36 @@ if __name__ == "__main__":
             dummy = os.path.split(checklistList[0])
             testString = dummy[0].split('/Data/')
             print(testString)
-            if (testString[1] == 'Printing'):
-                print("Use Printing class")
-                for checklist in checklistList:
-                    print(checklist)
-                    wb = load_workbook(checklist)
-                    ws = wb.active
+            
+            for checklist in checklistList:
+                print(checklist)
+                wb = load_workbook(checklist)
+                ws = wb.active
+                #try:
+                p = []
+                if (testString[1] == 'Printing'):
+                    print("Use Printing class")
                     p = Printing(checklist)
-                    print("Class type =")
-                    print(p)
                     p.populatePrintingClass(ws)
-                    p.populateTasks(ws)
+                    
+                elif (testString[1] == 'General Printing Prep'):
+                    print("Use PrintingPrep class");
+                    p = PrintingPrep(checklist)
+                    p.populatePrintingPrepClass(ws)
+                    
+                else:
+                    errorHandler(NOT_YET_SUPPORTED)
+                
+                print("Class type =")
+                print(p)
+                p.populateTasks(ws)
+                if (isinstance(p, Printing)):
                     if (p.sampleName != None):
                         if ("ppl" not in p.sampleName.lower()):
                             internalDataList.append(p)
-            elif (testString[1] == 'Slide coating - fluorinated silane'):
-                print("Use SlideCoating class")
-            else:
-                errorHandler(NOT_YET_SUPPORTED)
-            
+                else:
+                    internalDataList.append(p)
+
             # TODO: better to establish correct number of tasks by adding tasks to a dictionary so that
             # there is a list of unique tasks. 
             no_tasks = []
@@ -758,25 +876,41 @@ if __name__ == "__main__":
         
             # set up invariant section
             r = 1
-            ws.cell(row = r, column = 1).value = 'Source checklist'
-            ws.cell(row = r, column = 2).value = 'Print date'
-            ws.cell(row = r, column = 3).value  = 'Sample name'
-            ws.cell(row = r, column = 4).value  = 'Print rig'
-            ws.cell(row = r, column = 5).value  = 'Experimenter'
-            ws.cell(row = r, column = 6).value  = 'QC'
-            ws.cell(row = r, column = 7).value  = 'SOP version'
+            if (isinstance(internalData, Printing)):
+                ws.cell(row = r, column = 1).value = 'Source checklist'
+                ws.cell(row = r, column = 2).value = 'Print date'
+                ws.cell(row = r, column = 3).value  = 'Sample name'
+                ws.cell(row = r, column = 4).value  = 'Print rig'
+                ws.cell(row = r, column = 5).value  = 'Experimenter'
+                ws.cell(row = r, column = 6).value  = 'QC'
+                ws.cell(row = r, column = 7).value  = 'SOP version'
 
-            for internalData in internalDataList:
-                r = r + 1
-                ws.cell(row = r, column = 1).value = internalData.path
-                ws.cell(row = r, column = 2).value = internalData.printDate
-                ws.cell(row = r, column = 3).value  = internalData.sampleName
-                ws.cell(row = r, column = 4).value  = internalData.printRig
-                ws.cell(row = r, column = 5).value  = internalData.experimenter
-                ws.cell(row = r, column = 6).value  = internalData.qCPerson
-                ws.cell(row = r, column = 7).value  = internalData.sOPVersion
+                for internalData in internalDataList:
+                    r = r + 1
+                    ws.cell(row = r, column = 1).value = internalData.path
+                    ws.cell(row = r, column = 2).value = internalData.printDate
+                    ws.cell(row = r, column = 3).value  = internalData.sampleName
+                    ws.cell(row = r, column = 4).value  = internalData.printRig
+                    ws.cell(row = r, column = 5).value  = internalData.experimenter
+                    ws.cell(row = r, column = 6).value  = internalData.qCPerson
+                    ws.cell(row = r, column = 7).value  = internalData.sOPVersion
 
-            col = 8
+                col = 8
+            else:
+                ws.cell(row = r, column = 1).value = 'Source checklist'
+                ws.cell(row = r, column = 2).value  = 'Date'
+                ws.cell(row = r, column = 3).value  = 'QC'
+                ws.cell(row = r, column = 4).value  = 'SOP version'
+
+                for internalData in internalDataList:
+                    r = r + 1
+                    ws.cell(row = r, column = 1).value = internalData.path
+                    ws.cell(row = r, column = 2).value = internalData.date
+                    ws.cell(row = r, column = 3).value  = internalData.qCPerson
+                    ws.cell(row = r, column = 4).value  = internalData.sOPVersion
+
+                col = 5
+
             for mt in m.data.tasks:
                 if mt.output:
                     v = vars(mt)
