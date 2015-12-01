@@ -776,7 +776,6 @@ def crossRefPrepToGS(p, gws):
     sampleNamesFromGS = gws.col_values(headings.index("Sample name") + 1)
     sampleNamesFromGS = sampleNamesFromGS[1:]
     
-
     print('oil IDs in prep spreadsheet')
     print(p.oilIDs)
 
@@ -787,32 +786,23 @@ def crossRefPrepToGS(p, gws):
             # work out (approx.?) rest time based on start print time, oil prep durations, and oil/water mix date and time
             headings = gws.row_values(1)
             row = oilIDsFromGS.index(oilIDFromGS)
-            print(row+2)
             first_col = numberToLetters(headings.index("Protocol version") + 1)
             last_col = numberToLetters(headings.index("Door") + 1) 
-            print('CELLRANGE')
             cellrange = '%s%d:%s%d' % (first_col, row+2, last_col, row+2)
-            print(cellrange)
             cells = gws.range(cellrange)
-            print(cells)
             headings = headings[headings.index("Protocol version"):(headings.index("Door") + 1)]
             
             correspondingSampleName = sampleNamesFromGS[row]
-            print(correspondingSampleName)
             batch = p.oilIDs.index(oilIDFromGS) + 1
-            print(batch)
             labelString = 'Hydrate oil (Batch %d)' % batch
-            print(labelString)
             htask = p.returnTaskByLabel(labelString)
-            print(htask.duration)
             cells[headings.index("Oil/water vortex time")].value = htask.duration
             labelString = 'Mix with 5%% ABIL (Batch %d)' % batch
             stask = p.returnTaskByLabel(labelString)
-            print(stask.surfactantConcn)
             cells[headings.index("final oil/surfactant mix conc %w?")].value = stask.surfactantConcn
-            print(cells)
-            showerror("Pause", "Pause")
             gws.update_cells(cells)
+        
+    webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
 
 
 
