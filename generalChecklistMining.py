@@ -679,6 +679,8 @@ def numberToLetters(q):
                 
 def formatToGS(p, gws):
 
+    # cross reference with PrintingPrep sheet here!
+
     # find row, or make new row
     sampleNamesFromGS = gws.col_values(1)
     if p.sampleName in sampleNamesFromGS:
@@ -794,8 +796,8 @@ if __name__ == "__main__":
         else:
             errorHandler('Too many arguments passed!')
 
-        #mode = MODE_UPDATEWEBFROMCL
-        mode = MODE_NEW
+        mode = MODE_UPDATEWEBFROMCL
+        #mode = MODE_NEW
 
         xml_export = False;
 
@@ -814,10 +816,28 @@ if __name__ == "__main__":
 
             wb = load_workbook(checklistPath)
             ws = wb.active
-            p = Printing(checklistPath)
-            p.populatePrintingClass(ws)
-            p.populateTasks(ws)
-            formatToGS(p, gws)
+
+            dummy = os.path.split(checklistPath)
+            print(dummy)
+            testString = dummy[0].split('\\Data\\')
+            print(testString)
+
+            if (testString[1] == 'Printing'):
+                showerror("nonsense", testString[1])
+                p = Printing(checklistPath)
+                p.populatePrintingClass(ws)
+                p.populateTasks(ws)
+                
+                formatToGS(p, gws)
+            else:
+                p = PrintingPrep(checklistPath)
+                p.populatePrintingPrepClass(ws)
+                p.populateTasks(ws)
+                showerror("nonsense", testString[1])
+                # cross reference with Printing sheet here!
+                #crossRefPrepToGS(p, gws)
+
+            
 
         if (mode == MODE_APPEND):
             print("Mode = APPEND")
@@ -922,7 +942,7 @@ if __name__ == "__main__":
             wb = Workbook()
             ws = wb.active
 
-            exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output', 'outerInstance']
+            exclude_vars = ['taskLabel', 'taskCategory', 'taskNumber', 'notes', 'output', 'outerInstance', 'batch']
         
             # set up invariant section
             r = 1
