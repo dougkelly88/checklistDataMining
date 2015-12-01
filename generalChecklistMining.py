@@ -130,7 +130,7 @@ class ChecklistBase(object):
                         taskNumber = cell.value    
                         if (ws.cell(row = r, column = 3).value != None):
                             category = ws.cell(row = r, column = 3).value
-                            taskLabel = ws.cell(row = r, column = 4).value
+                        taskLabel = ws.cell(row = r, column = 4).value
                 else:
                     if (isinstance(cell.value, long)) | (isinstance(cell.value, float)):
                         r = row[0].row
@@ -703,10 +703,10 @@ def formatToGS(p, gws):
     gws.update_cell(row, headings.index("Completed Checklist Link") + 1, pdfPath)
 
     first_col = numberToLetters(headings.index("Protocol version") + 1)
-    last_col = numberToLetters(headings.index("Door") + 1) 
+    last_col = numberToLetters(headings.index("Mix number") + 1) 
     cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
     cells = gws.range(cellrange)
-    headings = headings[headings.index("Protocol version"):(headings.index("Door") + 1)]
+    headings = headings[headings.index("Protocol version"):(headings.index("Mix number") + 1)]
 
     for heading in headings:
         # should each of these be surrounded by its own try-catch for robustness?!
@@ -754,7 +754,7 @@ def formatToGS(p, gws):
         if (heading == "Pressure [kPa]"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Print").pressure
         if (heading == "Rig Box open/closed"):
-            cells[headings.index(heading)].value = p.returnTaskByLabel("Box").bottom
+                cells[headings.index(heading)].value = p.returnTaskByLabel("Box").bottom
         if (heading == "Tip fill/ul"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Filling tip").mixVolume
         if (heading == "oil volume/ul"):
@@ -762,8 +762,16 @@ def formatToGS(p, gws):
         if (heading == "Print voltage (DC) / V x 100"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Print").dcOffset
         if (heading == "incubation"):
-            str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, p.returnTaskByLabel("Transfer to oven").temperature)
-            cells[headings.index(heading)].value = str
+            if (p.returnTaskByLabel("Transfer to oven").temperature is not None):
+                t = float(p.returnTaskByLabel("Transfer to oven").temperature)
+            #if (isinstance(p.returnTaskByLabel("Transfer to oven").temperature, float)):
+                #str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, p.returnTaskByLabel("Transfer to oven").temperature)
+                str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, t)
+                cells[headings.index(heading)].value = str
+        if (heading == "oil/surfactant batch ID"):
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Oil").id
+        if (heading == "Mix number"):
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Mix").id
 
     gws.update_cells(cells)
     webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
@@ -803,10 +811,6 @@ def crossRefPrepToGS(p, gws):
             gws.update_cells(cells)
         
     webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
-
-
-
-
 
 def returnBatchNumber(taskLabel):
     # would be preferable to make this a method of the PrintingPrep class, but that's problematic to call from within class?!
@@ -863,7 +867,6 @@ if __name__ == "__main__":
             print(testString)
 
             if (testString[1] == 'Printing'):
-                showerror("nonsense", testString[1])
                 p = Printing(checklistPath)
                 p.populatePrintingClass(ws)
                 p.populateTasks(ws)
