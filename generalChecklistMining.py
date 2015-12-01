@@ -840,7 +840,7 @@ if __name__ == "__main__":
         else:
             errorHandler('Too many arguments passed!')
 
-        mode = MODE_UPDATEWEBFROMCL
+        #mode = MODE_UPDATEWEBFROMCL
         #mode = MODE_NEW
 
         xml_export = False;
@@ -848,10 +848,10 @@ if __name__ == "__main__":
         if (mode == MODE_UPDATEWEBFROMCL):
         
             gc = authenticate_google_docs()
-            #gsh = gc.open("Sample register")
-            #gws = gsh.worksheet("Sample register")
-            gsh = gc.open("Dummy sample register")
-            gws = gsh.worksheet("Sheet1")
+            gsh = gc.open("Sample register")
+            gws = gsh.worksheet("Sample register")
+            #gsh = gc.open("Dummy sample register")
+            #gws = gsh.worksheet("Sheet1")
 
             # Replace this with argument input from command line - get from excel using Application.ActiveWorkbook.Path or Application.ActiveWorkbook.FullName 
             #checklistPath = '//base4share/share/SOPs/Completed Checklists/Data/Printing/Printing 1 2015-10-30 0909.xlsm'
