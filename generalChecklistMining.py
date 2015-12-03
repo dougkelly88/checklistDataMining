@@ -772,7 +772,7 @@ def formatToGS(p, gws):
                 str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, t)
                 cells[headings.index(heading)].value = str
         if (heading == "oil/surfactant batch ID"):
-            cells[headings.index(heading)].value = p.returnTaskByLabel("Oil").id
+            cells[headings.index(heading)].value = '%s-%d' % (p.returnTaskByLabel("Oil").id, p.returnTaskByLabel("Oil").aliquote)
         if (heading == "Mix number"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Mix").id
 
