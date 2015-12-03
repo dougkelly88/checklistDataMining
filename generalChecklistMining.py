@@ -781,10 +781,10 @@ def formatToGS(p, gws):
     gws.update_cells(cells)
     webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
 
-def uploadToHiddenGS(p, gc):
+def uploadToHiddenGS(p, gsh):
 
     # for debug, pass authentication and open dummy sheet here; for real thing, pass gsh
-    gsh = gc.open("Dummy sample register")
+    #gsh = gc.open("Dummy sample register")
     gws = gsh.worksheet("Oil prep")
     headings = gws.row_values(1)
     
@@ -793,16 +793,13 @@ def uploadToHiddenGS(p, gc):
     
     # add all conceivable aliquot ID-aliquot number combinations
     # just in case, add possibility of no aliquot number being employed
-    row_ind = 0
     for aliquot_no in range(11):
         for oilID in p.oilIDs:
             if oilID is not None:
                 idFromGS = gws.col_values(headings.index("ID") + 1)
-                print(idFromGS)
                 row = len(idFromGS) + 1
                 print('row=%d' % row) 
                 cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
-                print(cellrange)
                 cells = gws.range(cellrange)
 
         
@@ -826,11 +823,10 @@ def uploadToHiddenGS(p, gc):
                 stask = p.returnTaskByLabel(labelString)
                 cells[headings.index("final oil/surfactant mix conc %w?")].value = stask.surfactantConcn
 
-                row_ind = row_ind + 1
                 gws.update_cells(cells)
 
     
-    webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
+    #webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
 
 def crossRefPrepToGS(p, gws):
 
@@ -936,7 +932,7 @@ if __name__ == "__main__":
                 p.populateTasks(ws)
                 # cross reference with Printing sheet here!
                 #crossRefPrepToGS(p, gws)
-                uploadToHiddenGS(p, gc)
+                uploadToHiddenGS(p, gsh)
 
             
 
