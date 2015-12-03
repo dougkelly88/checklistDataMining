@@ -687,17 +687,20 @@ def formatToGS(p, gws):
 
     # find row, or make new row
     sampleNamesFromGS = gws.col_values(1)
+    date = datetime.datetime.strptime(p.printDate, '%y%m%d')
+    fmt = ('%d/%m/%Y')
     if p.sampleName in sampleNamesFromGS:
         row = sampleNamesFromGS.index(p.sampleName) + 1
+        gws.update_cell(row, 2, date.strftime(fmt))
     else:
         row = len(sampleNamesFromGS) + 1
         gws.update_cell(row, 1, p.sampleName)
+        gws.update_cell(row, 2, date.strftime(fmt))
 
     headings = gws.row_values(1)
     splitPath = os.path.split(p.path)
     filename = os.path.splitext(splitPath[1])
     fmt = ('%Y\%B\%d')
-    date = datetime.datetime.strptime(p.printDate, '%y%m%d')
     datePath = date.strftime(fmt)
     pdfPath = os.path.join("\\\\base4share\share\SOPs\Completed Checklists", datePath, (filename[0]).replace("Printing 1", "Printing") +  '.pdf')
     gws.update_cell(row, headings.index("Completed Checklist Link") + 1, pdfPath)
@@ -772,6 +775,47 @@ def formatToGS(p, gws):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Oil").id
         if (heading == "Mix number"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Mix").id
+
+    gws.update_cells(cells)
+    webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
+
+def uploadToHiddenGS(p, gc):
+
+    # for debug, pass authentication and open dummy sheet here; for real thing, pass gsh
+    gsh = gc.open("Dummy sample register")
+    gws = gsh.worksheet("Oil prep")
+    headings = gws.row_values(1)
+    idFromGS = gws.col_values(headings.index("ID") + 1)
+    row = len(sampleNamesFromGS) + 1
+    
+    first_col = numberToLetters(headings.index("Date") + 1)
+    last_col = numberToLetters(headings.index("Final surfactant concentration") + 1) 
+    cellrange = '%s%d:%s%d' % (first_col, row, last_col, row+11)
+    cells = gws.range(cellrange)
+
+    # add all conceivable aliquot ID-aliquot number combinations
+    # just in case, add possibility of no aliquot number being employed
+    for aliquot_no in range(11):
+        for oilID in p.oilIDs:
+            batch = p.oilIDs.index(oilID) + 1
+
+            if (aliquot_no == 10):
+                id = '%s' % (oilID)
+            else:
+                id = '%s-%d' % (oilID, aliquot_no+1)
+            cells[headings.index("ID"), aliquot_no].value = id
+            date = datetime.datetime.strptime(p.printDate, '%y%m%d')
+            fmt = ('%d/%m/%Y')
+            dateStr = date.strftime(fmt)
+            cells[headings.index("Date"), aliquot_no].value = dateStr
+
+            labelString = 'Hydrate oil (Batch %d)' % batch
+            htask = p.returnTaskByLabel(labelString)
+            cells[headings.index("Oil/water vortex time"), aliquot_no].value = htask.duration
+
+            labelString = 'Mix with 5%% ABIL (Batch %d)' % batch
+            stask = p.returnTaskByLabel(labelString)
+            cells[headings.index("final oil/surfactant mix conc %w?")].value = stask.surfactantConcn
 
     gws.update_cells(cells)
     webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
@@ -879,7 +923,8 @@ if __name__ == "__main__":
                 p.populatePrintingPrepClass(ws)
                 p.populateTasks(ws)
                 # cross reference with Printing sheet here!
-                crossRefPrepToGS(p, gws)
+                #crossRefPrepToGS(p, gws)
+                uploadToHidden(p, gc)
 
             
 
