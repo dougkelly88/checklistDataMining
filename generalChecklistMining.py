@@ -543,6 +543,8 @@ class PrintingPrep(ChecklistBase):
                 if (isinstance(c, basestring)):
                     if ("surfactant" in c.lower()):
                         self.surfactantConcn = ws.cell(row = r, column = col+3).value
+                        if isinstance(self.surfactantConcn, float):
+                            self.surfactantConcn = self.surfactantConcn * 100;
                         print(self.surfactantConcn)
 
     class rotateTask(TaskBase):
@@ -785,39 +787,49 @@ def uploadToHiddenGS(p, gc):
     gsh = gc.open("Dummy sample register")
     gws = gsh.worksheet("Oil prep")
     headings = gws.row_values(1)
-    idFromGS = gws.col_values(headings.index("ID") + 1)
-    row = len(sampleNamesFromGS) + 1
     
     first_col = numberToLetters(headings.index("Date") + 1)
-    last_col = numberToLetters(headings.index("Final surfactant concentration") + 1) 
-    cellrange = '%s%d:%s%d' % (first_col, row, last_col, row+11)
-    cells = gws.range(cellrange)
-
+    last_col = numberToLetters(headings.index("final oil/surfactant mix conc %w?") + 1) 
+    
     # add all conceivable aliquot ID-aliquot number combinations
     # just in case, add possibility of no aliquot number being employed
+    row_ind = 0
     for aliquot_no in range(11):
         for oilID in p.oilIDs:
-            batch = p.oilIDs.index(oilID) + 1
+            if oilID is not None:
+                idFromGS = gws.col_values(headings.index("ID") + 1)
+                print(idFromGS)
+                row = len(idFromGS) + 1
+                print('row=%d' % row) 
+                cellrange = '%s%d:%s%d' % (first_col, row, last_col, row)
+                print(cellrange)
+                cells = gws.range(cellrange)
 
-            if (aliquot_no == 10):
-                id = '%s' % (oilID)
-            else:
-                id = '%s-%d' % (oilID, aliquot_no+1)
-            cells[headings.index("ID"), aliquot_no].value = id
-            date = datetime.datetime.strptime(p.printDate, '%y%m%d')
-            fmt = ('%d/%m/%Y')
-            dateStr = date.strftime(fmt)
-            cells[headings.index("Date"), aliquot_no].value = dateStr
+        
+                batch = p.oilIDs.index(oilID) + 1
 
-            labelString = 'Hydrate oil (Batch %d)' % batch
-            htask = p.returnTaskByLabel(labelString)
-            cells[headings.index("Oil/water vortex time"), aliquot_no].value = htask.duration
+                if (aliquot_no == 10):
+                    id = '%s' % (oilID)
+                else:
+                    id = '%s-%d' % (oilID, aliquot_no+1)
+                cells[headings.index("ID")].value = id
+                date = datetime.datetime.strptime(p.date, '%y%m%d')
+                fmt = ('%d/%m/%Y')
+                dateStr = date.strftime(fmt)
+                cells[headings.index("Date")].value = dateStr
 
-            labelString = 'Mix with 5%% ABIL (Batch %d)' % batch
-            stask = p.returnTaskByLabel(labelString)
-            cells[headings.index("final oil/surfactant mix conc %w?")].value = stask.surfactantConcn
+                labelString = 'Hydrate oil (Batch %d)' % batch
+                htask = p.returnTaskByLabel(labelString)
+                cells[headings.index("Oil/water vortex time")].value = htask.duration
 
-    gws.update_cells(cells)
+                labelString = 'Mix with 5%% ABIL (Batch %d)' % batch
+                stask = p.returnTaskByLabel(labelString)
+                cells[headings.index("final oil/surfactant mix conc %w?")].value = stask.surfactantConcn
+
+                row_ind = row_ind + 1
+                gws.update_cells(cells)
+
+    
     webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
 
 def crossRefPrepToGS(p, gws):
@@ -924,7 +936,7 @@ if __name__ == "__main__":
                 p.populateTasks(ws)
                 # cross reference with Printing sheet here!
                 #crossRefPrepToGS(p, gws)
-                uploadToHidden(p, gc)
+                uploadToHiddenGS(p, gc)
 
             
 
