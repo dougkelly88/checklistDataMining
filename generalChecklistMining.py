@@ -331,7 +331,7 @@ class Printing(ChecklistBase):
                     if ("Size" in c):
                         self.size = ws.cell(row = r, column = col+1).value
                     if ("batch" in c.lower()):
-                        self.batch = '%s-%s' % (ws.cell(row = r, column = col+1).value, ws.cell(row = r, column = col+3).value)
+                        self.batch = '%s-%02d' % (ws.cell(row = r, column = col+1).value, ws.cell(row = r, column = col+3).value)
                     if ("ID" in c):
                         self.ID = ws.cell(row = r, column = col+1).value
 
@@ -774,7 +774,8 @@ def formatToGS(p, gws):
                 str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, t)
                 cells[headings.index(heading)].value = str
         if (heading == "oil/surfactant batch ID"):
-            cells[headings.index(heading)].value = '%s-%d' % (p.returnTaskByLabel("Oil").id, p.returnTaskByLabel("Oil").aliquote)
+            if p.returnTaskByLabel("Oil").aliquote is not None:
+                cells[headings.index(heading)].value = '%s-%d' % (p.returnTaskByLabel("Oil").id, p.returnTaskByLabel("Oil").aliquote)
         if (heading == "Mix number"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Mix").id
 
