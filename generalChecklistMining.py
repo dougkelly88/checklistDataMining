@@ -901,7 +901,7 @@ if __name__ == "__main__":
         if (mode == MODE_UPDATEWEBFROMCL):
         
             gc = authenticate_google_docs()
-            gsh = gc.open("Sample register")
+            gsh = gc.open("Sample register 2016")
             gws = gsh.worksheet("Sample register")
             #gsh = gc.open("Dummy sample register")
             #gws = gsh.worksheet("Sheet1")
