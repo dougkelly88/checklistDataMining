@@ -1,4 +1,4 @@
-﻿import os, time, string, datetime, tkFileDialog, ast, webbrowser, sys, traceback, re
+﻿import os, time, string, datetime, tkFileDialog, ast, webbrowser, sys, traceback, re, numbers
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 from Tkinter import *
@@ -768,10 +768,21 @@ def formatToGS(p, gws):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Print").dcOffset
         if (heading == "incubation"):
             if (p.returnTaskByLabel("Transfer to oven").temperature is not None):
-                t = float(p.returnTaskByLabel("Transfer to oven").temperature)
-            #if (isinstance(p.returnTaskByLabel("Transfer to oven").temperature, float)):
-                #str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, p.returnTaskByLabel("Transfer to oven").temperature)
-                str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, t)
+                str = ''
+                print(p.returnTaskByLabel("Transfer to oven").temperature)
+                if isinstance(p.returnTaskByLabel("Transfer to oven").temperature, numbers.Number):
+                    #print('isnum')
+                    t = float(p.returnTaskByLabel("Transfer to oven").temperature)
+                    str = "%s @ %02.1f" % (p.returnTaskByLabel("Transfer to oven").type, t)
+                elif isinstance(p.returnTaskByLabel("Transfer to oven").temperature, basestring):
+                    #str = p.returnTaskByLabel("Transfer to oven").temperature.encode('latin1')
+                    #print('isbasestr')
+                    str = "%s @ %s" % (p.returnTaskByLabel("Transfer to oven").type, p.returnTaskByLabel("Transfer to oven").temperature.encode('latin1'))
+                elif isinstance(p.returnTaskByLabel("Transfer to oven").temperature, list):
+                     #print('islist')
+                     str = "%s @ %s" % (p.returnTaskByLabel("Transfer to oven").type, p.returnTaskByLabel("Transfer to oven").temperature[0].encode('latin1'))
+                print(type(p.returnTaskByLabel("Transfer to oven").temperature))
+                print(str)
                 cells[headings.index(heading)].value = str
         if (heading == "oil/surfactant batch ID"):
             if p.returnTaskByLabel("Oil").aliquote is not None:
@@ -780,7 +791,8 @@ def formatToGS(p, gws):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Mix").id
 
     gws.update_cells(cells)
-    webbrowser.open('https://docs.google.com/spreadsheets/d/1W_S4NUgCKchcfokpm7cbRywsh-AIfmzk5ksjX05vKII/edit#gid=1149687153', 2, True)
+    #raw_input('press enter to continue...')
+    webbrowser.open('https://docs.google.com/spreadsheets/d/1gbs1BvFy69ISbnAYRfxLj74tpYalQjAWPbhT2hsr_Z8/edit#gid=1149687153', 2, True)
 
 def uploadToHiddenGS(p, gsh):
 
