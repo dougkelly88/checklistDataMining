@@ -128,9 +128,12 @@ class ChecklistBase(object):
                     if (isinstance(cell.value, long)):
                         r = row[0].row
                         taskNumber = cell.value    
+                        print("task number")
+                        print(taskNumber)
                         if (ws.cell(row = r, column = 3).value != None):
                             category = ws.cell(row = r, column = 3).value
                         taskLabel = ws.cell(row = r, column = 4).value
+                        print(taskLabel)
                 else:
                     if (isinstance(cell.value, long)) | (isinstance(cell.value, float)):
                         r = row[0].row
@@ -139,11 +142,13 @@ class ChecklistBase(object):
                         if (ws.cell(row = r, column = 3).value != None):
                             taskLabel = ws.cell(row = r, column = 3).value
                 if (taskLabel != None):
+                    print(taskLabel)
                     t = c.identifyCorrectClass(taskLabel)
                     t.taskLabel = taskLabel
                     t.taskCategory = category
                     t.taskNumber  = taskNumber
                     t.populate(ws, r)
+                    print(t)
                     #print(vars(t))
                     c.tasks.append(t)
 
@@ -288,6 +293,8 @@ class Printing(ChecklistBase):
                 if (isinstance(c, basestring)):
                     if ("Bottom" in c):
                         self.bottom = ws.cell(row = r, column = col+1).value
+                        print("bottom=")
+                        print(self.bottom)
 
     class BulksTask(TaskBase):
         def __init__(self):
@@ -331,7 +338,11 @@ class Printing(ChecklistBase):
                     if ("Size" in c):
                         self.size = ws.cell(row = r, column = col+1).value
                     if ("batch" in c.lower()):
-                        self.batch = '%s-%02d' % (ws.cell(row = r, column = col+1).value, ws.cell(row = r, column = col+3).value)
+                        if isinstance(ws.cell(row = r, column = col+3).value, numbers.Number):
+                            self.batch = '%s-%02d' % (ws.cell(row = r, column = col+1).value, ws.cell(row = r, column = col+3).value)
+                        else:
+                            self.batch = '%s-NONE' % (ws.cell(row = r, column = col+1).value)
+
                     if ("ID" in c):
                         self.ID = ws.cell(row = r, column = col+1).value
 
@@ -347,12 +358,19 @@ class Printing(ChecklistBase):
             for col in range(26):
                 c = ws.cell(row = r, column = col).value
                 if (isinstance(c, basestring)):
+                    print(c)
                     if ("CA" in c):
                         self.CA = ws.cell(row = r, column = col+1).value
+                        print("slide CA")
+                        print(self.CA)
                     if ("batch" in c.lower()):
                         self.batch = ws.cell(row = r, column = col+1).value
+                        print("slide batch")
+                        print(self.batch)
                     if ("#" in c):
                         self.ID = ws.cell(row = r, column = col+1).value
+                        print("slide number")
+                        print(self.ID)
 
     class HumidityTask(TaskBase):
         def __init__(self):
@@ -424,27 +442,30 @@ class Printing(ChecklistBase):
 
     def identifyCorrectClass(self, description):
         description = description.lower()
+        print("description=")
+        print(description)
         if ("humidity" in description) or ("humidifier" in description):
             return Printing.HumidityTask()
         if ("temperature" in description):
             return Printing.TemperatureTask()
-        if (description == "slide"):
+        if (description == "slide (note batch and id)"):
             return Printing.SlideTask()
-        if (description == "tip") or ("tip size" in description):
+        if (description == "tip (note size and #)") or ("tip size" in description):
             return Printing.TipTask()
-        #if (description == "mix") or ("push-through" in description):
+        #if (description == "mix (note id)") or ("push-through" in description):
         #    return Printing.BulksTask()
         if (description == "print"):
             return Printing.PrintTask()
-        if (description == "oil"):
+        if (description == "oil (note batch and id)"):
             return Printing.OilTask()
-        if ("box" in description):
+        if ("box check intact" in description):
+            print("found box check intact")
             return Printing.BoxTask()
         if ("oven" in description):
             return Printing.OvenTask()
-        if (description == "filling tip"):
+        if (description == "fill tip"):
             return Printing.FillingTipTask()
-        if (description == "mix"):
+        if (description == "mix (note id)"):
             return Printing.MixTask()
         else:
             return TaskBase()
@@ -606,7 +627,7 @@ class PrintingPrep(ChecklistBase):
 
 def authenticate_google_docs():
     #f = file(os.path.join('C:/Users/d.kelly/Desktop/Python/bulkSummariser-f4e730f107d4.p12'), 'rb')
-    f = file(os.path.join('//base4share/share/Doug/checklistDataMining/bulkSummariser-f4e730f107d4.p12'), 'rb')
+    f = file(os.path.join('//base4share/share/Doug/2015/checklistDataMining/bulkSummariser-f4e730f107d4.p12'), 'rb')
     SIGNED_KEY = f.read()
     f.close()
     scope = ['https://spreadsheets.google.com/feeds', 'https://docs.google.com/feeds', 'https://www.googleapis.com/auth/gmail.send']
@@ -722,27 +743,27 @@ def formatToGS(p, gws):
         if (heading == "Printer"):
             cells[headings.index(heading) ].value = p.experimenter
         if (heading == "Slide CA"):
-            cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide").CA
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide (note batch and ID)").CA
         if (heading == "Slide batch"):
-            cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide").batch
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide (note batch and ID)").batch
         if (heading == "Tip size"):
-            cells[headings.index(heading) ].value = p.returnTaskByLabel("Tip").size
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Tip (note size and #)").size
         if (heading == "Tip Batch"):
-            cells[headings.index(heading) ].value = p.returnTaskByLabel("Tip").batch
+            cells[headings.index(heading) ].value = p.returnTaskByLabel("Tip (note size and #)").batch
         if (heading == "Tip ID"):
-            cells[headings.index(heading) ].value = "%s%s" % (p.printDate, p.returnTaskByLabel("Tip").ID)
+            cells[headings.index(heading) ].value = "%s%s" % (p.printDate, p.returnTaskByLabel("Tip (note size and #)").ID)
         if (heading == "Room Temperature"):
             cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room temperature").temperature
         if (heading == "Room Humidity"):
             if (p.returnTaskByLabel("Note room humidity").humidity != None):
                 cells[headings.index(heading) ].value = p.returnTaskByLabel("Note room humidity").humidity * 100
-        if (heading == "Humidity low"):
-            if (p.returnTaskByLabel("Position Oil + Turn humidifier to low").humidity != None):
-                cells[headings.index(heading) ].value = p.returnTaskByLabel("Position Oil + Turn humidifier to low").humidity * 100
+        #if (heading == "Humidity low"):
+        #    if (p.returnTaskByLabel("Position Oil + Turn humidifier to low").humidity != None):
+        #        cells[headings.index(heading) ].value = p.returnTaskByLabel("Position Oil + Turn humidifier to low").humidity * 100
         if (heading == "Humidity high"):
             try:
-                if (p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity != None):
-                    cells[headings.index(heading) ].value = p.returnTaskByLabel("Move tip into oil and turn humidifier to high").humidity * 100
+                if (p.returnTaskByLabel("Insert well, check box humidity >80%").humidity != None):
+                    cells[headings.index(heading) ].value = p.returnTaskByLabel("Insert well, check box humidity >80%").humidity * 100
             except:
                 if (p.returnTaskByLabel("Turn humidifier to high").humidity != None):
                     cells[headings.index(heading) ].value = p.returnTaskByLabel("Turn humidifier to high").humidity * 100
@@ -759,11 +780,11 @@ def formatToGS(p, gws):
         if (heading == "Pressure [kPa]"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Print").pressure
         if (heading == "Rig Box open/closed"):
-                cells[headings.index(heading)].value = p.returnTaskByLabel("Box").bottom
+                cells[headings.index(heading)].value = p.returnTaskByLabel("Box check intact").bottom
         if (heading == "Tip fill/ul"):
-            cells[headings.index(heading)].value = p.returnTaskByLabel("Filling tip").mixVolume
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Fill tip").mixVolume
         if (heading == "oil volume/ul"):
-            cells[headings.index(heading)].value = p.returnTaskByLabel("Position Oil + Turn humidifier to low").oilVolume
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Insert well, check box humidity >80%").oilVolume
         if (heading == "Print voltage (DC) / V x 100"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Print").dcOffset
         if (heading == "incubation"):
@@ -785,10 +806,10 @@ def formatToGS(p, gws):
                 print(str)
                 cells[headings.index(heading)].value = str
         if (heading == "oil/surfactant batch ID"):
-            if p.returnTaskByLabel("Oil").aliquote is not None:
-                cells[headings.index(heading)].value = '%s-%d' % (p.returnTaskByLabel("Oil").id, p.returnTaskByLabel("Oil").aliquote)
+            if p.returnTaskByLabel("Oil (note batch and ID)").aliquote is not None:
+                cells[headings.index(heading)].value = '%s-%d' % (p.returnTaskByLabel("Oil (note batch and ID)").id, p.returnTaskByLabel("Oil (note batch and ID)").aliquote)
         if (heading == "Mix number"):
-            cells[headings.index(heading)].value = p.returnTaskByLabel("Mix").id
+            cells[headings.index(heading)].value = p.returnTaskByLabel("Mix (note ID)").id
 
     gws.update_cells(cells)
     #raw_input('press enter to continue...')
