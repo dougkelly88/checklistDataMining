@@ -742,8 +742,8 @@ def formatToGS(p, gws):
             cells[headings.index(heading) ].value = p.printRig
         if (heading == "Printer"):
             cells[headings.index(heading) ].value = p.experimenter
-        if (heading == "Slide CA"):
-            cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide (note batch and ID)").CA
+        #if (heading == "Slide CA"):
+        #    cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide (note batch and ID)").CA
         if (heading == "Slide batch"):
             cells[headings.index(heading) ].value = p.returnTaskByLabel("Slide (note batch and ID)").batch
         if (heading == "Tip size"):
@@ -807,7 +807,10 @@ def formatToGS(p, gws):
                 cells[headings.index(heading)].value = str
         if (heading == "oil/surfactant batch ID"):
             if p.returnTaskByLabel("Oil (note batch and ID)").aliquote is not None:
-                cells[headings.index(heading)].value = '%s-%d' % (p.returnTaskByLabel("Oil (note batch and ID)").id, p.returnTaskByLabel("Oil (note batch and ID)").aliquote)
+                v = '%s-%d' % (p.returnTaskByLabel("Oil (note batch and ID)").id, p.returnTaskByLabel("Oil (note batch and ID)").aliquote)
+            else:
+                v = p.returnTaskByLabel("Oil (note batch and ID)").id
+            cells[headings.index(heading)].value = v
         if (heading == "Mix number"):
             cells[headings.index(heading)].value = p.returnTaskByLabel("Mix (note ID)").id
 
